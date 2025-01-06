@@ -16,7 +16,7 @@ A powerful and flexible ESP (Extra Sensory Perception) library for Roblox that a
 ## Basic Usage
 
 ```lua
-local ESP = loadstring(game:HttpGet("path/to/esp.lua"))()
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ESP.md"))()
 
 -- Toggle ESP
 ESP.Enabled = true
