@@ -42,4 +42,4 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 - [ESP Library Documentation](libraries/ESP.md)
 
 ## License
-MIT License
+[MIT License](LICENSE.md)
