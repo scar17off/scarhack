@@ -18,7 +18,7 @@ A Roblox script hub with support for multiple games.
 ## Usage
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/main/main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/main.lua"))()
 ```
 
 ## Features
