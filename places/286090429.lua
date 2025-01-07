@@ -293,3 +293,18 @@ game:GetService("CoreGui").ChildRemoved:Connect(function(child)
         end
     end
 end)
+
+local GUI_KEYBIND = "RightShift" -- Default keybind
+
+local SettingsTab = Window:CreateTab("Settings")
+local GeneralSection = SettingsTab:CreateSection("General")
+
+local GuiKeybind = GeneralSection:CreateKeybind("Toggle GUI", GUI_KEYBIND, function()
+    Window:Toggle(not game:GetService("CoreGui"):FindFirstChild("ScarHack").Main.Visible)
+end)
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode[GUI_KEYBIND] then
+        Window:Toggle(not game:GetService("CoreGui"):FindFirstChild("ScarHack").Main.Visible)
+    end
+end)
