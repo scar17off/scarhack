@@ -299,12 +299,17 @@ local GUI_KEYBIND = "RightShift" -- Default keybind
 local SettingsTab = Window:CreateTab("Settings")
 local GeneralSection = SettingsTab:CreateSection("General")
 
-local GuiKeybind = GeneralSection:CreateKeybind("Toggle GUI", GUI_KEYBIND, function()
-    Window:Toggle(not game:GetService("CoreGui"):FindFirstChild("ScarHack").Main.Visible)
+-- Create a toggle first, then add keybind to it
+local GuiToggle = GeneralSection:CreateToggle("Toggle GUI", true, function(Value)
+    Window:Toggle(Value)
 end)
 
-game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode[GUI_KEYBIND] then
-        Window:Toggle(not game:GetService("CoreGui"):FindFirstChild("ScarHack").Main.Visible)
+-- Add keybind to the toggle
+GuiToggle:CreateKeybind("RightShift", function()
+    local guiWindow = game:GetService("CoreGui"):FindFirstChild("ScarHack")
+    if guiWindow then
+        local newState = not guiWindow.Main.Visible
+        GuiToggle:SetState(newState)
+        Window:Toggle(newState)
     end
 end)
