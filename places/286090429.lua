@@ -116,19 +116,11 @@ ESP:Toggle(false)
 ESP.Players = true
 
 local DistanceToggle = ESPSection:CreateToggle("Show Distance", false, function(Value)
-    ESP.Distance = Value
+    ESP.Distance = Value  -- Now uses separate Distance setting
 end)
 
 local DistanceSlider = ESPSection:CreateSlider("Max Distance", 100, 2000, 1000, true, function(Value)
     ESP.MaxDistance = Value
-end)
-
-local TextSizeSlider = ESPSection:CreateSlider("Text Size", 8, 24, 14, true, function(Value)
-    ESP.TextSize = Value
-end)
-
-local BoxTransparencySlider = ESPSection:CreateSlider("Box Transparency", 0, 1, 0.5, false, function(Value)
-    ESP.BoxTransparency = Value
 end)
 
 local function IsPartVisible(part)

@@ -5,6 +5,7 @@ local ESP = {
     BoxShift = CFrame.new(0,-1.5,0),
 	BoxSize = Vector3.new(4,6,0),
     Color = Color3.fromRGB(255, 170, 0),
+    DefaultColor = Color3.fromRGB(255, 255, 255),
     FaceCamera = false,
     Names = true,
     TeamColor = true,
@@ -15,6 +16,8 @@ local ESP = {
     Glow = false,
     GlowColor = Color3.fromRGB(255, 0, 0),
     GlowTransparency = 0.5,
+    MaxDistance = 1000,
+    Distance = false,
     
     Objects = setmetatable({}, {__mode="kv"}),
     Overrides = {}
@@ -64,7 +67,10 @@ function ESP:GetColor(obj)
 		return ov(obj)
     end
     local p = self:GetPlrFromChar(obj)
-	return p and self.TeamColor and p.Team and p.Team.TeamColor.Color or self.Color
+    if p and self.TeamColor and p.Team then
+        return p.Team.TeamColor.Color
+    end
+    return self.DefaultColor
 end
 
 function ESP:GetPlrFromChar(char)
@@ -84,8 +90,10 @@ function ESP:Toggle(bool)
             for i2,v2 in pairs(v.Components) do
                 if i2 == "Quad" then
                     v2.Visible = bool and self.Boxes
-                elseif i2 == "Name" or i2 == "Distance" then
+                elseif i2 == "Name" then
                     v2.Visible = bool and self.Names
+                elseif i2 == "Distance" then
+                    v2.Visible = bool and self.Distance
                 elseif i2 == "Tracer" then
                     v2.Visible = bool and self.Tracers
                 end
@@ -176,6 +184,10 @@ function boxBase:Update()
     if self.Player and not ESP.Players then
         allow = false
     end
+    local distance = (cam.CFrame.p - self.PrimaryPart.Position).magnitude
+    if distance > ESP.MaxDistance then
+        allow = false
+    end
     if self.IsEnabled and (type(self.IsEnabled) == "string" and not ESP[self.IsEnabled] or type(self.IsEnabled) == "function" and not self:IsEnabled()) then
         allow = false
     end
@@ -239,17 +251,25 @@ function boxBase:Update()
             self.Components.Name.Position = Vector2.new(TagPos.X, TagPos.Y)
             self.Components.Name.Text = self.Name
             self.Components.Name.Color = color
-            
+        else
+            self.Components.Name.Visible = false
+        end
+    else
+        self.Components.Name.Visible = false
+    end
+
+    if ESP.Distance then
+        local TagPos, Vis5 = WorldToViewportPoint(cam, locs.TagPos.p)
+        
+        if Vis5 then
             self.Components.Distance.Visible = true
             self.Components.Distance.Position = Vector2.new(TagPos.X, TagPos.Y + 14)
             self.Components.Distance.Text = math.floor((cam.CFrame.p - cf.p).magnitude) .."m away"
             self.Components.Distance.Color = color
         else
-            self.Components.Name.Visible = false
             self.Components.Distance.Visible = false
         end
     else
-        self.Components.Name.Visible = false
         self.Components.Distance.Visible = false
     end
     
