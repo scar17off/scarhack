@@ -51,17 +51,6 @@ local ESPSection = VisualTab:CreateSection("ESP")
 local ESPToggle = ESPSection:CreateToggle("Enable ESP", false, function(Value)
     ESP_ENABLED = Value
     ESP:Toggle(Value)
-    
-    -- Clean up ESP objects when disabling
-    if not Value then
-        for _, v in pairs(ESP.Objects) do
-            if v.Type == "Box" then
-                v:Remove()
-            end
-        end
-        -- Clear the objects table
-        table.clear(ESP.Objects)
-    end
 end)
 
 local BoxesToggle = ESPSection:CreateToggle("Boxes", false, function(Value)
@@ -91,17 +80,17 @@ end)
 
 local GlowToggle = ESPSection:CreateToggle("Glow", false, function(Value)
     ESP_GLOW = Value
-    -- ESP.Glow = Value
+    ESP.Glow = Value
 end)
 
 local GlowColorPicker = ESPSection:CreateColorpicker("Glow Color", Color3.fromRGB(255, 0, 0), function(Value)
     ESP_GLOW_COLOR = Value
-    -- ESP.GlowColor = Value
+    ESP.GlowColor = Value
 end)
 
 local GlowTransparencySlider = ESPSection:CreateSlider("Glow Transparency", 0, 1, 0.5, false, function(Value)
     ESP_GLOW_TRANSPARENCY = Value
-    -- ESP.GlowTransparency = Value
+    ESP.GlowTransparency = Value
 end)
 
 ESP.FaceCamera = true
@@ -286,13 +275,8 @@ end)
 -- Cleanup when script is unloaded
 game:GetService("CoreGui").ChildRemoved:Connect(function(child)
     if child.Name == "ScarHack" then
+        ESP:Cleanup()
         ESP:Toggle(false)
-        for _, v in pairs(ESP.Objects) do
-            if v.Type == "Box" then
-                v:Remove()
-            end
-        end
-        table.clear(ESP.Objects)
         
         -- Clean up drawings
         if FOVCircle then
