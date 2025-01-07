@@ -34,7 +34,7 @@ FOVCircle.ZIndex = 999
 FOVCircle.Transparency = 1
 FOVCircle.Color = Color3.fromRGB(255, 255, 255)
 
-local ESP = loadstring(game:HttpGet("https://kiriot22.com/releases/ESP.lua"))()
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
 
 local ESP_ENABLED = false
 local ESP_BOXES = false
@@ -91,17 +91,17 @@ end)
 
 local GlowToggle = ESPSection:CreateToggle("Glow", false, function(Value)
     ESP_GLOW = Value
-    ESP.Glow = Value
+    -- ESP.Glow = Value
 end)
 
 local GlowColorPicker = ESPSection:CreateColorpicker("Glow Color", Color3.fromRGB(255, 0, 0), function(Value)
     ESP_GLOW_COLOR = Value
-    ESP.GlowColor = Value
+    -- ESP.GlowColor = Value
 end)
 
 local GlowTransparencySlider = ESPSection:CreateSlider("Glow Transparency", 0, 1, 0.5, false, function(Value)
     ESP_GLOW_TRANSPARENCY = Value
-    ESP.GlowTransparency = Value
+    -- ESP.GlowTransparency = Value
 end)
 
 ESP.FaceCamera = true

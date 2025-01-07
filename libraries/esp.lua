@@ -12,9 +12,6 @@ local ESP = {
     AttachShift = 1,
     TeamMates = true,
     Players = true,
-    Glow = false,
-    GlowColor = Color3.fromRGB(255, 0, 0),
-    GlowTransparency = 0.5,
     
     Objects = setmetatable({}, {__mode="kv"}),
     Overrides = {}
@@ -138,12 +135,8 @@ boxBase.__index = boxBase
 function boxBase:Remove()
     ESP.Objects[self.Object] = nil
     for i,v in pairs(self.Components) do
-        if typeof(v) == "Instance" then
-            v:Destroy()
-        else
-            v.Visible = false
-            v:Remove()
-        end
+        v.Visible = false
+        v:Remove()
         self.Components[i] = nil
     end
 end
@@ -262,24 +255,6 @@ function boxBase:Update()
     else
         self.Components.Tracer.Visible = false
     end
-
-    if ESP.Glow then
-        if not self.Components.Highlight then
-            self.Components.Highlight = Instance.new("Highlight")
-            self.Components.Highlight.FillTransparency = ESP.GlowTransparency
-            self.Components.Highlight.OutlineTransparency = 1
-        end
-        
-        self.Components.Highlight.Parent = self.Object
-        self.Components.Highlight.FillColor = ESP.GlowColor
-        self.Components.Highlight.Enabled = true
-    else
-        if self.Components.Highlight then
-            self.Components.Highlight.Enabled = false
-            self.Components.Highlight:Destroy()
-            self.Components.Highlight = nil
-        end
-    end
 end
 
 function ESP:Add(obj, options)
@@ -339,19 +314,11 @@ function ESP:Add(obj, options)
     
     obj.AncestryChanged:Connect(function(_, parent)
         if parent == nil and ESP.AutoRemove ~= false then
-            if box.Components.Highlight then
-                box.Components.Highlight:Destroy()
-                box.Components.Highlight = nil
-            end
             box:Remove()
         end
     end)
     obj:GetPropertyChangedSignal("Parent"):Connect(function()
         if obj.Parent == nil and ESP.AutoRemove ~= false then
-            if box.Components.Highlight then
-                box.Components.Highlight:Destroy()
-                box.Components.Highlight = nil
-            end
             box:Remove()
         end
     end)
@@ -360,10 +327,6 @@ function ESP:Add(obj, options)
 	if hum then
         hum.Died:Connect(function()
             if ESP.AutoRemove ~= false then
-                if box.Components.Highlight then
-                    box.Components.Highlight:Destroy()
-                    box.Components.Highlight = nil
-                end
                 box:Remove()
             end
 		end)
