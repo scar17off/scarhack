@@ -51,13 +51,7 @@ local ESPSection = VisualTab:CreateSection("ESP")
 
 local ESPToggle = ESPSection:CreateToggle("Enable ESP", false, function(Value)
     ESP_ENABLED = Value
-    if Value then
-        ESP:Toggle(true)
-    else
-        -- Clean up when disabling
-        ESP:Cleanup()
-        ESP:Toggle(false)
-    end
+    ESP:Toggle(Value)
 end)
 
 local BoxesToggle = ESPSection:CreateToggle("Boxes", false, function(Value)
@@ -299,10 +293,9 @@ end)
 -- Cleanup when script is unloaded
 game:GetService("CoreGui").ChildRemoved:Connect(function(child)
     if child.Name == "ScarHack" then
-        ESP:Cleanup()
         ESP:Toggle(false)
         
-        -- Clean up drawings
+        -- Clean up FOV circle
         if FOVCircle then
             FOVCircle:Remove()
         end

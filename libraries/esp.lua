@@ -78,13 +78,21 @@ end
 
 function ESP:Toggle(bool)
     self.Enabled = bool
-    if not bool then
-        -- Only hide components, don't remove objects
-        for i,v in pairs(self.Objects) do
-            if v.Type == "Box" then
-                for i,v in pairs(v.Components) do
-                    v.Visible = false
+    -- Simply toggle visibility of all components
+    for i,v in pairs(self.Objects) do
+        if v.Type == "Box" then
+            for i2,v2 in pairs(v.Components) do
+                if i2 == "Quad" then
+                    v2.Visible = bool and self.Boxes
+                elseif i2 == "Name" or i2 == "Distance" then
+                    v2.Visible = bool and self.Names
+                elseif i2 == "Tracer" then
+                    v2.Visible = bool and self.Tracers
                 end
+            end
+            -- Handle highlight separately
+            if v.Components.Highlight then
+                v.Components.Highlight.Enabled = bool and self.Glow
             end
         end
     end
@@ -265,9 +273,10 @@ function boxBase:Update()
             self.Components.Highlight = Instance.new("Highlight")
             self.Components.Highlight.FillTransparency = ESP.GlowTransparency
             self.Components.Highlight.OutlineTransparency = 1
+            self.Components.Highlight.Parent = self.Object
         end
         
-        self.Components.Highlight.Parent = self.Object
+        self.Components.Highlight.FillTransparency = ESP.GlowTransparency
         self.Components.Highlight.FillColor = ESP.Overrides.GetGlowColor and ESP.Overrides.GetGlowColor(self.Object) or ESP.GlowColor
         self.Components.Highlight.Enabled = true
     else
@@ -287,7 +296,7 @@ function ESP:Add(obj, options)
     local box = setmetatable({
         Name = options.Name or obj.Name,
         Type = "Box",
-        Color = options.Color --[[or self:GetColor(obj)]],
+        Color = options.Color or self:GetColor(obj),
         Size = options.Size or self.BoxSize,
         Object = obj,
         Player = options.Player or plrs:GetPlayerFromCharacter(obj),
@@ -305,30 +314,30 @@ function ESP:Add(obj, options)
 
     box.Components["Quad"] = Draw("Quad", {
         Thickness = self.Thickness,
-        Color = color,
+        Color = box.Color,
         Transparency = 1,
         Filled = false,
         Visible = self.Enabled and self.Boxes
     })
     box.Components["Name"] = Draw("Text", {
-		Text = box.Name,
-		Color = box.Color,
-		Center = true,
-		Outline = true,
+        Text = box.Name,
+        Color = box.Color,
+        Center = true,
+        Outline = true,
         Size = 19,
         Visible = self.Enabled and self.Names
-	})
-	box.Components["Distance"] = Draw("Text", {
-		Color = box.Color,
-		Center = true,
-		Outline = true,
+    })
+    box.Components["Distance"] = Draw("Text", {
+        Color = box.Color,
+        Center = true,
+        Outline = true,
         Size = 19,
         Visible = self.Enabled and self.Names
-	})
-	
-	box.Components["Tracer"] = Draw("Line", {
-		Thickness = ESP.Thickness,
-		Color = box.Color,
+    })
+    
+    box.Components["Tracer"] = Draw("Line", {
+        Thickness = ESP.Thickness,
+        Color = box.Color,
         Transparency = 1,
         Visible = self.Enabled and self.Tracers
     })
@@ -413,14 +422,5 @@ game:GetService("RunService").RenderStepped:Connect(function()
         end
     end
 end)
-
-function ESP:Cleanup()
-    for i,v in pairs(self.Objects) do
-        if v.Type == "Box" then
-            v:Remove()
-        end
-    end
-    table.clear(self.Objects)
-end
 
 return ESP
