@@ -417,12 +417,20 @@ local function PlayerAdded(p)
     end
 end
 plrs.PlayerAdded:Connect(PlayerAdded)
-for i,v in pairs(plrs:GetPlayers()) do
+
+-- Handle existing players
+for _, v in pairs(plrs:GetPlayers()) do
     if v ~= plr then
-        PlayerAdded(v)
+        -- Handle existing player's current character
+        if v.Character then
+            coroutine.wrap(CharAdded)(v.Character)
+        end
+        -- Connect to CharacterAdded for future characters
+        v.CharacterAdded:Connect(CharAdded)
     end
 end
 
+-- Add cleanup for ESP objects
 game:GetService("RunService").RenderStepped:Connect(function()
     cam = workspace.CurrentCamera
     for i,v in (ESP.Enabled and pairs or ipairs)(ESP.Objects) do
