@@ -102,30 +102,15 @@ function ESP:AddObjectListener(parent, options)
         if type(options.Type) == "string" and c:IsA(options.Type) or options.Type == nil then
             if type(options.Name) == "string" and c.Name == options.Name or options.Name == nil then
                 if not options.Validator or options.Validator(c) then
-                    -- Create a new options table for ESP:Add
-                    local espOptions = {
+                    local box = ESP:Add(c, {
                         PrimaryPart = type(options.PrimaryPart) == "string" and c:WaitForChild(options.PrimaryPart) or type(options.PrimaryPart) == "function" and options.PrimaryPart(c),
                         Color = type(options.Color) == "function" and options.Color(c) or options.Color,
                         ColorDynamic = options.ColorDynamic,
                         Name = type(options.CustomName) == "function" and options.CustomName(c) or options.CustomName,
                         IsEnabled = options.IsEnabled,
-                        RenderInNil = options.RenderInNil,
-                        Size = options.Size,
-                        Components = options.Components,
-                        ShowDistance = options.ShowDistance,
-                        ShowHealth = options.ShowHealth,
-                        CustomProperties = options.CustomProperties
-                    }
-
-                    -- Apply any custom properties
-                    if options.CustomProperties then
-                        for k, v in pairs(options.CustomProperties) do
-                            espOptions[k] = type(v) == "function" and v(c) or v
-                        end
-                    end
-
-                    local box = ESP:Add(c, espOptions)
-                    
+                        RenderInNil = options.RenderInNil
+                    })
+                    --TODO: add a better way of passing options
                     if options.OnAdded then
                         coroutine.wrap(options.OnAdded)(box)
                     end
@@ -278,7 +263,6 @@ function boxBase:Update()
         self.Components.Tracer.Visible = false
     end
 
-    -- Handle Glow/Highlight
     if ESP.Glow then
         if not self.Components.Highlight then
             self.Components.Highlight = Instance.new("Highlight")
@@ -417,20 +401,12 @@ local function PlayerAdded(p)
     end
 end
 plrs.PlayerAdded:Connect(PlayerAdded)
-
--- Handle existing players
-for _, v in pairs(plrs:GetPlayers()) do
+for i,v in pairs(plrs:GetPlayers()) do
     if v ~= plr then
-        -- Handle existing player's current character
-        if v.Character then
-            coroutine.wrap(CharAdded)(v.Character)
-        end
-        -- Connect to CharacterAdded for future characters
-        v.CharacterAdded:Connect(CharAdded)
+        PlayerAdded(v)
     end
 end
 
--- Add cleanup for ESP objects
 game:GetService("RunService").RenderStepped:Connect(function()
     cam = workspace.CurrentCamera
     for i,v in (ESP.Enabled and pairs or ipairs)(ESP.Objects) do
