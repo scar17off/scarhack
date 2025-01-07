@@ -22,7 +22,6 @@ local FOV_RADIUS = 360
 local SMOOTHNESS = 1
 local TEAM_CHECK = true
 local VISIBLE_CHECK = true
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 2
@@ -116,12 +115,44 @@ ESP:Toggle(false)
 ESP.Players = true
 
 local DistanceToggle = ESPSection:CreateToggle("Show Distance", false, function(Value)
-    ESP.Distance = Value  -- Now uses separate Distance setting
+    ESP.Distance = Value
 end)
 
 local DistanceSlider = ESPSection:CreateSlider("Max Distance", 100, 2000, 1000, true, function(Value)
     ESP.MaxDistance = Value
 end)
+
+local HitscanSection = AimbotTab:CreateSection("Hitscan")
+
+HitscanSection:CreateDropdown("Target Hitbox", {"Any", "Head", "HumanoidRootPart", "Torso"}, function(Option)
+    AIM_TARGET = Option
+end)
+
+local PreferredHitboxDropdown = HitscanSection:CreateDropdown("Preferred Hitbox", {
+    "Head",
+    "HumanoidRootPart",
+    "Torso",
+    "Left Arm",
+    "Right Arm",
+    "Left Leg",
+    "Right Leg"
+}, function(Option)
+    PREFERRED_HITBOX = Option
+end, "Head")
+
+local AimMethodDropdown = HitscanSection:CreateDropdown("Aim Method", {
+    "Plain",
+    "Smooth",
+    "Flick"
+}, function(Option)
+    AIM_METHOD = Option
+end, "Smooth")
+
+local RandomHitboxToggle = HitscanSection:CreateToggle("Random Hitbox Per Player", false, function(Value)
+    RANDOM_HITBOX = Value
+end)
+
+local PlayerHitboxes = {}
 
 local function IsPartVisible(part)
 
@@ -194,7 +225,22 @@ local function GetClosestPlayerToMouse()
                     local targetPart = nil
 
                     if AIM_TARGET == "Any" then
-                        targetPart = GetClosestVisiblePart(character)
+                        if RANDOM_HITBOX then
+                            -- Check if player needs a new random hitbox
+                            if not PlayerHitboxes[player] then
+                                local validParts = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
+                                PlayerHitboxes[player] = validParts[math.random(1, #validParts)]
+                            end
+                            targetPart = character:FindFirstChild(PlayerHitboxes[player])
+                        else
+                            -- Use preferred hitbox if visible, otherwise find closest visible part
+                            local preferredPart = character:FindFirstChild(PREFERRED_HITBOX)
+                            if preferredPart and IsPartVisible(preferredPart) then
+                                targetPart = preferredPart
+                            else
+                                targetPart = GetClosestVisiblePart(character)
+                            end
+                        end
                     else
                         targetPart = character:FindFirstChild(AIM_TARGET)
                     end
@@ -248,10 +294,6 @@ local SmoothnessSlider = AimbotSettings:CreateSlider("Smoothness", 1, 10, 1, tru
     SMOOTHNESS = Value
 end)
 
-AimbotSettings:CreateDropdown("Target Part", {"Any", "Head", "HumanoidRootPart", "Torso"}, function(Option)
-    AIM_TARGET = Option
-end)
-
 AimbotToggle:CreateKeybind("F")
 
 game:GetService("RunService").RenderStepped:Connect(function()
@@ -266,10 +308,20 @@ game:GetService("RunService").RenderStepped:Connect(function()
             local targetPos = CAMERA:WorldToScreenPoint(TargetPart.Position)
             local mousePos = Vector2.new(MOUSE.X, MOUSE.Y)
             local moveVector = Vector2.new(
-                (targetPos.X - mousePos.X) / SMOOTHNESS,
-                (targetPos.Y - mousePos.Y) / SMOOTHNESS
+                (targetPos.X - mousePos.X),
+                (targetPos.Y - mousePos.Y)
             )
-            mousemoverel(moveVector.X, moveVector.Y)
+
+            if AIM_METHOD == "Plain" then
+                mousemoverel(moveVector.X, moveVector.Y)
+            elseif AIM_METHOD == "Smooth" then
+                mousemoverel(moveVector.X / SMOOTHNESS, moveVector.Y / SMOOTHNESS)
+            elseif AIM_METHOD == "Flick" then
+                -- Wait small random delay then flick
+                if math.random() < 0.1 then  -- 10% chance each frame
+                    mousemoverel(moveVector.X * 0.8, moveVector.Y * 0.8)
+                end
+            end
         end
     end
 end)
@@ -311,5 +363,22 @@ GuiToggle:CreateKeybind("RightShift", function()
         local newState = not guiWindow.Main.Visible
         GuiToggle:SetState(newState)
         Window:Toggle(newState)
+    end
+end)
+
+-- Player death handler for random hitbox
+game.Players.PlayerRemoving:Connect(function(player)
+    PlayerHitboxes[player] = nil
+end)
+
+-- Character removal handler
+game.Workspace.ChildRemoved:Connect(function(child)
+    local player = game.Players:GetPlayerFromCharacter(child)
+    if player then
+        -- Assign new random hitbox when player dies
+        if RANDOM_HITBOX then
+            local validParts = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
+            PlayerHitboxes[player] = validParts[math.random(1, #validParts)]
+        end
     end
 end)
