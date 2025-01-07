@@ -268,7 +268,7 @@ function boxBase:Update()
         end
         
         self.Components.Highlight.Parent = self.Object
-        self.Components.Highlight.FillColor = ESP.GlowColor
+        self.Components.Highlight.FillColor = ESP.Overrides.GetGlowColor and ESP.Overrides.GetGlowColor(self.Object) or ESP.GlowColor
         self.Components.Highlight.Enabled = true
     else
         if self.Components.Highlight then
