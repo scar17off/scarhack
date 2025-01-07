@@ -227,8 +227,26 @@ function boxBase:Update()
         local BottomLeft, Vis3 = WorldToViewportPoint(cam, locs.BottomLeft.p)
         local BottomRight, Vis4 = WorldToViewportPoint(cam, locs.BottomRight.p)
 
-        if self.Components.Quad then
-            if Vis1 or Vis2 or Vis3 or Vis4 then
+        -- Check if any point is behind the camera (Z < 0)
+        if TopLeft.Z < 0 or TopRight.Z < 0 or BottomLeft.Z < 0 or BottomRight.Z < 0 then
+            self.Components.Quad.Visible = false
+        else
+            -- Check if points are within screen bounds
+            local success = true
+            local minX = 0
+            local minY = 0
+            local maxX = cam.ViewportSize.X
+            local maxY = cam.ViewportSize.Y
+
+            local points = {TopLeft, TopRight, BottomLeft, BottomRight}
+            for _, point in pairs(points) do
+                if point.X < minX or point.X > maxX or point.Y < minY or point.Y > maxY then
+                    success = false
+                    break
+                end
+            end
+
+            if success and (Vis1 or Vis2 or Vis3 or Vis4) then
                 self.Components.Quad.Visible = true
                 self.Components.Quad.PointA = Vector2.new(TopRight.X, TopRight.Y)
                 self.Components.Quad.PointB = Vector2.new(TopLeft.X, TopLeft.Y)
