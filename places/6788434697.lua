@@ -16,6 +16,7 @@ local MainTab = Window:CreateTab("Main")
 local AutoFarm1Section = MainTab:CreateSection("Auto Farm 1")
 local AutoFarm2Section = MainTab:CreateSection("Auto Farm 2")
 local FreezeSection = MainTab:CreateSection("Freeze Control")
+local AimbotSection = MainTab:CreateSection("Aimbot")
 
 -- Global variables for toggles
 local AUTO_FARM = false
@@ -26,17 +27,40 @@ local AUTO_FARM_BEHIND = true
 local AUTO_FARM_2_DISTANCE = 5
 local FREEZE_RANGE = 30
 local DEFAULT_WALKSPEED = 16
+local AIMBOT_ENABLED = false
+local AIMBOT_INCLUDE_BOSSES = false
+local FOV_RADIUS = 360
+local AUTO_FARM_INCLUDE_BOSSES = false
+local AUTO_FARM_2_INCLUDE_BOSSES = false
 
 local frozenZombies = {}
+
+-- Create FOV circle for aimbot
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.NumSides = 60
+FOVCircle.Radius = FOV_RADIUS
+FOVCircle.Filled = false
+FOVCircle.Visible = false
+FOVCircle.ZIndex = 999
+FOVCircle.Transparency = 1
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
 
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
     HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 end)
 
-function getCloseZombies(maxDistance)
+function getCloseZombies(maxDistance, includeBosses)
     local zombies = workspace.OtherWaifus:GetChildren()
     local closeZombies = {}
+    
+    -- Add boss zombies if enabled
+    if includeBosses then
+        for _, boss in pairs(workspace.Waifus:GetChildren()) do
+            table.insert(zombies, boss)
+        end
+    end
     
     for _, zombie in pairs(zombies) do
         if zombie:FindFirstChild("HumanoidRootPart") and 
@@ -73,7 +97,7 @@ function findSafePosition(zombie)
     local behindPosition = zombieCFrame * CFrame.new(0, 0, AUTO_FARM_DISTANCE)
     
     -- Make sure we're not too close to other zombies
-    local nearbyZombies = getCloseZombies(10)
+    local nearbyZombies = getCloseZombies(10, AUTO_FARM_INCLUDE_BOSSES)
     for _, nearbyZombie in pairs(nearbyZombies) do
         if nearbyZombie ~= zombie then
             local distanceToNewPos = (behindPosition.Position - nearbyZombie.HumanoidRootPart.Position).Magnitude
@@ -91,7 +115,7 @@ end
 function teleportBehindZombies()
     if not AUTO_FARM then return end
     
-    local closestZombies = getCloseZombies(AUTO_FARM_DISTANCE)
+    local closestZombies = getCloseZombies(AUTO_FARM_DISTANCE, AUTO_FARM_INCLUDE_BOSSES)
     if #closestZombies == 0 then return end
     
     local closestZombie = closestZombies[1]
@@ -122,6 +146,12 @@ function freezeZombiesInFront()
     end
     
     local zombies = workspace.OtherWaifus:GetChildren()
+    if AUTO_FARM_2_INCLUDE_BOSSES then
+        for _, boss in pairs(workspace.Waifus:GetChildren()) do
+            table.insert(zombies, boss)
+        end
+    end
+    
     for _, zombie in pairs(zombies) do
         if zombie:FindFirstChild("HumanoidRootPart") and zombie:FindFirstChild("Zombie") then
             -- Let dead zombies go back to normal
@@ -185,6 +215,62 @@ function freezeZombiesInRange()
     end
 end
 
+function IsPartVisible(part)
+    local camera = game.Workspace.CurrentCamera
+    if not camera then return false end
+
+    local origin = camera.CFrame.Position
+    local target = part.Position
+    local vector = (target - origin)
+    local ray = Ray.new(origin, vector)
+
+    local ignoreList = {game.Players.LocalPlayer.Character}
+    
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
+    
+    return hit == nil or hit:IsDescendantOf(part.Parent)
+end
+
+function GetClosestZombieToMouse()
+    local CLOSEST_ZOMBIE = nil
+    local CLOSEST_DISTANCE = math.huge
+    local CLOSEST_HEAD = nil
+    local MOUSE = game.Players.LocalPlayer:GetMouse()
+    local CAMERA = game.Workspace.CurrentCamera
+
+    -- Get all zombies
+    local zombies = workspace.OtherWaifus:GetChildren()
+    if AIMBOT_INCLUDE_BOSSES then
+        for _, boss in pairs(workspace.Waifus:GetChildren()) do
+            table.insert(zombies, boss)
+        end
+    end
+
+    for _, zombie in pairs(zombies) do
+        if zombie:FindFirstChild("Head") and zombie:FindFirstChild("Zombie") and zombie.Zombie.Health > 0 then
+            local head = zombie.Head
+            
+            -- Always check visibility (removed the if VISIBLE_CHECK condition)
+            if not IsPartVisible(head) then
+                continue
+            end
+            
+            local screenPoint = CAMERA:WorldToScreenPoint(head.Position)
+            local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(MOUSE.X, MOUSE.Y)).Magnitude
+
+            if mouseDistance <= FOV_RADIUS then
+                if mouseDistance < CLOSEST_DISTANCE then
+                    CLOSEST_DISTANCE = mouseDistance
+                    CLOSEST_ZOMBIE = zombie
+                    CLOSEST_HEAD = head
+                end
+            end
+        end
+    end
+
+    return CLOSEST_ZOMBIE, CLOSEST_HEAD
+end
+
 -- Auto Farm 1
 AutoFarm1Section:CreateToggle("Enabled", false, function(Value)
     AUTO_FARM = Value
@@ -198,6 +284,10 @@ AutoFarm1Section:CreateSlider("Distance", 5, 200, 50, true, function(Value)
     AUTO_FARM_DISTANCE = Value
 end)
 
+AutoFarm1Section:CreateToggle("Target Bosses", false, function(Value)
+    AUTO_FARM_INCLUDE_BOSSES = Value
+end)
+
 -- Auto Farm 2
 AutoFarm2Section:CreateToggle("Enabled", false, function(Value)
     AUTO_FARM_2 = Value
@@ -205,6 +295,10 @@ end)
 
 AutoFarm2Section:CreateSlider("Distance", 1, 50, 5, true, function(Value)
     AUTO_FARM_2_DISTANCE = Value
+end)
+
+AutoFarm2Section:CreateToggle("Target Bosses", false, function(Value)
+    AUTO_FARM_2_INCLUDE_BOSSES = Value
 end)
 
 -- Add the new section controls
@@ -216,11 +310,63 @@ FreezeSection:CreateSlider("Freeze Range", 5, 100, 30, true, function(Value)
     FREEZE_RANGE = Value
 end)
 
+-- Add Aimbot controls
+local AimbotToggle = AimbotSection:CreateToggle("Enable Aimbot", false, function(Value)
+    AIMBOT_ENABLED = Value
+end)
+
+AimbotToggle:CreateKeybind("F")
+
+local BossesToggle = AimbotSection:CreateToggle("Target Bosses", false, function(Value)
+    AIMBOT_INCLUDE_BOSSES = Value
+end)
+
+local ShowFOVToggle = AimbotSection:CreateToggle("Show FOV", false, function(Value)
+    FOVCircle.Visible = Value
+end)
+
+local FOVSlider = AimbotSection:CreateSlider("FOV Radius", 0, 800, 360, true, function(Value)
+    FOV_RADIUS = Value
+    FOVCircle.Radius = Value
+end)
+
 -- Run the functions
-RunService.Heartbeat:Connect(function()
+RunService.RenderStepped:Connect(function()
     teleportBehindZombies()
     freezeZombiesInFront()
     freezeZombiesInRange()
+    
+    -- Update FOV circle position
+    if FOVCircle then
+        FOVCircle.Position = game:GetService("UserInputService"):GetMouseLocation()
+    end
+    
+    -- Handle aimbot
+    if AIMBOT_ENABLED then
+        local _, TargetHead = GetClosestZombieToMouse()
+        if TargetHead then
+            local MOUSE = game.Players.LocalPlayer:GetMouse()
+            local CAMERA = game.Workspace.CurrentCamera
+            
+            local targetPos = CAMERA:WorldToScreenPoint(TargetHead.Position)
+            local mousePos = Vector2.new(MOUSE.X, MOUSE.Y)
+            local moveVector = Vector2.new(
+                targetPos.X - mousePos.X,
+                targetPos.Y - mousePos.Y
+            )
+            
+            mousemoverel(moveVector.X, moveVector.Y)
+        end
+    end
+end)
+
+-- Clean up FOV circle when GUI is closed
+game:GetService("CoreGui").ChildRemoved:Connect(function(child)
+    if child.Name == "Zombie Farm" then
+        if FOVCircle then
+            FOVCircle:Remove()
+        end
+    end
 end)
 
 -- Settings
