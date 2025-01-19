@@ -29,6 +29,11 @@ local DEFAULT_WALKSPEED = 16
 
 local frozenZombies = {}
 
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end)
+
 function getCloseZombies(maxDistance)
     local zombies = workspace.OtherWaifus:GetChildren()
     local closeZombies = {}
