@@ -14,6 +14,7 @@ A Roblox script hub with support for multiple games.
 ## Supported Games
 
 - [Arsenal](places/286090429.lua) - `286090429`
+- [AniPhobia](places/6788434697.lua) - `6788434697`
 
 ## Usage
 
