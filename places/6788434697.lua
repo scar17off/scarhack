@@ -15,13 +15,16 @@ local Window = library:CreateWindow({
 local MainTab = Window:CreateTab("Main")
 local AutoFarm1Section = MainTab:CreateSection("Auto Farm 1")
 local AutoFarm2Section = MainTab:CreateSection("Auto Farm 2")
+local FreezeSection = MainTab:CreateSection("Freeze Control")
 
 -- Global variables for toggles
 local AUTO_FARM = false
 local AUTO_FARM_2 = false
+local RANGE_FREEZE = false
 local AUTO_FARM_DISTANCE = 50
 local AUTO_FARM_BEHIND = true
 local AUTO_FARM_2_DISTANCE = 5
+local FREEZE_RANGE = 30
 local DEFAULT_WALKSPEED = 16
 
 local frozenZombies = {}
@@ -147,6 +150,36 @@ function freezeZombiesInFront()
     end
 end
 
+function freezeZombiesInRange()
+    if not RANGE_FREEZE then
+        -- Unfreeze all zombies when toggle is off
+        for zombie, _ in pairs(frozenZombies) do
+            if zombie:FindFirstChild("Zombie") then
+                zombie.Zombie.WalkSpeed = DEFAULT_WALKSPEED
+            end
+        end
+        frozenZombies = {}
+        return
+    end
+    
+    local zombies = workspace.OtherWaifus:GetChildren()
+    for _, zombie in pairs(zombies) do
+        if zombie:FindFirstChild("HumanoidRootPart") and zombie:FindFirstChild("Zombie") then
+            local distance = (HumanoidRootPart.Position - zombie.HumanoidRootPart.Position).Magnitude
+            
+            -- Freeze zombies within range
+            if distance <= FREEZE_RANGE and zombie.Zombie.Health > 0 then
+                zombie.Zombie.WalkSpeed = 0
+                frozenZombies[zombie] = true
+            -- Unfreeze zombies outside range
+            elseif frozenZombies[zombie] then
+                zombie.Zombie.WalkSpeed = DEFAULT_WALKSPEED
+                frozenZombies[zombie] = nil
+            end
+        end
+    end
+end
+
 -- Auto Farm 1
 AutoFarm1Section:CreateToggle("Enabled", false, function(Value)
     AUTO_FARM = Value
@@ -169,10 +202,20 @@ AutoFarm2Section:CreateSlider("Distance", 1, 50, 5, true, function(Value)
     AUTO_FARM_2_DISTANCE = Value
 end)
 
+-- Add the new section controls
+FreezeSection:CreateToggle("Range Freeze", false, function(Value)
+    RANGE_FREEZE = Value
+end)
+
+FreezeSection:CreateSlider("Freeze Range", 5, 100, 30, true, function(Value)
+    FREEZE_RANGE = Value
+end)
+
 -- Run the functions
 RunService.Heartbeat:Connect(function()
     teleportBehindZombies()
     freezeZombiesInFront()
+    freezeZombiesInRange()
 end)
 
 -- Settings
