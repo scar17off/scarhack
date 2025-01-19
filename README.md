@@ -38,6 +38,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
   - Visibility Check
   - Multiple Target Parts
 
+### AniPhobia
+- Auto Farm (2 methods)
+
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
 
