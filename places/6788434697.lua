@@ -13,6 +13,7 @@ local Window = library:CreateWindow({
 }, game:GetService("CoreGui"))
 
 local MainTab = Window:CreateTab("Main")
+local ESPTab = Window:CreateTab("ESP")
 local AutoFarm1Section = MainTab:CreateSection("Auto Farm 1")
 local AutoFarm2Section = MainTab:CreateSection("Auto Farm 2")
 local FreezeSection = MainTab:CreateSection("Freeze Control")
@@ -329,6 +330,160 @@ local FOVSlider = AimbotSection:CreateSlider("FOV Radius", 0, 800, 360, true, fu
     FOV_RADIUS = Value
     FOVCircle.Radius = Value
 end)
+
+-- Load ESP Library
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
+
+-- Create ESP Sections
+local PlayerSection = ESPTab:CreateSection("Player")
+local ZombieSection = ESPTab:CreateSection("Zombie")
+local AmmoSection = ESPTab:CreateSection("Ammo Boxes")
+local VehicleSection = ESPTab:CreateSection("Cars")
+
+-- Player ESP
+PlayerSection:CreateToggle("Enable", false, function(Value)
+    ESP.Players = Value
+    ESP:Toggle(Value)
+end)
+
+PlayerSection:CreateToggle("Boxes", false, function(Value)
+    ESP.Boxes = Value
+end)
+
+PlayerSection:CreateToggle("Names", false, function(Value)
+    ESP.Names = Value
+end)
+
+PlayerSection:CreateToggle("Tracers", false, function(Value)
+    ESP.Tracers = Value
+end)
+
+-- Zombie ESP
+ZombieSection:CreateToggle("Enable", false, function(Value)
+    ESP.Zombie = Value
+end)
+
+ESP:AddObjectListener(workspace.OtherWaifus, {
+    Type = "Model",
+    CustomName = function(obj) return obj.Name end,
+    Color = Color3.fromRGB(255, 0, 0),
+    IsEnabled = "Zombie"
+})
+
+-- Ammo Boxes ESP
+AmmoSection:CreateToggle("Pistol Ammo", false, function(Value)
+    ESP.PistolAmmo = Value
+end)
+
+AmmoSection:CreateToggle("Shotgun Ammo", false, function(Value)
+    ESP.ShotgunAmmo = Value
+end)
+
+AmmoSection:CreateToggle("Rifle Ammo", false, function(Value)
+    ESP.RifleAmmo = Value
+end)
+
+ESP:AddObjectListener(workspace.AmmoBoxes, {
+    Name = "PistolAmmo",
+    CustomName = "Pistol Ammo",
+    Color = Color3.fromRGB(255, 255, 0),
+    IsEnabled = "PistolAmmo"
+})
+
+ESP:AddObjectListener(workspace.AmmoBoxes, {
+    Name = "ShotgunAmmo",
+    CustomName = "Shotgun Ammo",
+    Color = Color3.fromRGB(255, 128, 0),
+    IsEnabled = "ShotgunAmmo"
+})
+
+ESP:AddObjectListener(workspace.AmmoBoxes, {
+    Name = "RifleAmmo",
+    CustomName = "Rifle Ammo",
+    Color = Color3.fromRGB(255, 0, 0),
+    IsEnabled = "RifleAmmo"
+})
+
+-- Vehicle ESP
+VehicleSection:CreateToggle("Black Convertible", false, function(Value)
+    ESP.BlackConvertible = Value
+end)
+
+VehicleSection:CreateToggle("Red Convertible", false, function(Value)
+    ESP.RedConvertible = Value
+end)
+
+VehicleSection:CreateToggle("White Convertible", false, function(Value)
+    ESP.WhiteConvertible = Value
+end)
+
+VehicleSection:CreateToggle("Helicopter", false, function(Value)
+    ESP.Helicopter = Value
+end)
+
+VehicleSection:CreateToggle("White Sedan", false, function(Value)
+    ESP.WhiteSedan = Value
+end)
+
+VehicleSection:CreateToggle("Humvee", false, function(Value)
+    ESP.Humvee = Value
+end)
+
+ESP:AddObjectListener(workspace.Cars, {
+    Name = "Convertable (Black)",
+    CustomName = "Black Convertible",
+    Color = Color3.fromRGB(0, 0, 0),
+    IsEnabled = "BlackConvertible"
+})
+
+ESP:AddObjectListener(workspace.Cars, {
+    Name = "Convertable (Red)",
+    CustomName = "Red Convertible",
+    Color = Color3.fromRGB(255, 0, 0),
+    IsEnabled = "RedConvertible"
+})
+
+ESP:AddObjectListener(workspace.Cars, {
+    Name = "Convertable (White)",
+    CustomName = "White Convertible",
+    Color = Color3.fromRGB(255, 255, 255),
+    IsEnabled = "WhiteConvertible"
+})
+
+ESP:AddObjectListener(workspace.Cars, {
+    Name = "Helicopter",
+    CustomName = "Helicopter",
+    Color = Color3.fromRGB(0, 255, 0),
+    IsEnabled = "Helicopter"
+})
+
+ESP:AddObjectListener(workspace.Cars, {
+    Name = "Sedan(White)",
+    CustomName = "White Sedan",
+    Color = Color3.fromRGB(200, 200, 200),
+    IsEnabled = "WhiteSedan"
+})
+
+ESP:AddObjectListener(workspace.Cars, {
+    Name = "Humvee",
+    CustomName = "Humvee",
+    Color = Color3.fromRGB(50, 50, 50),
+    IsEnabled = "Humvee"
+})
+
+-- Initialize ESP
+ESP:Toggle(false)
+ESP.Players = false
+ESP.Zombie = false
+ESP.PistolAmmo = false
+ESP.ShotgunAmmo = false
+ESP.RifleAmmo = false
+ESP.BlackConvertible = false
+ESP.RedConvertible = false
+ESP.WhiteConvertible = false
+ESP.Helicopter = false
+ESP.WhiteSedan = false
+ESP.Humvee = false
 
 -- Run the functions
 RunService.RenderStepped:Connect(function()
