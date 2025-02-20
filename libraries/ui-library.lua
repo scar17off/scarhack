@@ -211,7 +211,7 @@ function UI.CreateWindow()
                 local min = sliderConfig.min or 0
                 local max = sliderConfig.max or 100
                 local current = sliderConfig.default or 50
-                local defaultSpeed = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") and game.Players.LocalPlayer.Character.Humanoid.WalkSpeed or 16
+                local defaultValue = sliderConfig.defaultValue or current
                 
                 local function updateSlider(input)
                     local pos = math.clamp((input.Position.X - SliderButton.AbsolutePosition.X) / SliderButton.AbsoluteSize.X, 0, 1)
@@ -224,7 +224,7 @@ function UI.CreateWindow()
                     end
                 end
                 
-                -- Update the toggle callback to handle speed changes
+                -- Update the toggle callback to handle value changes
                 local originalCallback = toggleConfig.callback
                 toggleConfig.callback = function(state)
                     enabled = state
@@ -233,9 +233,8 @@ function UI.CreateWindow()
                             sliderConfig.callback(current)
                         end
                     else
-                        -- Reset to default speed when disabled
-                        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-                            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = defaultSpeed
+                        if sliderConfig.onDisable then
+                            sliderConfig.onDisable(defaultValue)
                         end
                     end
                     if originalCallback then
@@ -299,7 +298,7 @@ function UI.CreateWindow()
                 SubToggleButton.ZIndex = 3
                 
                 local subEnabled = toggleConfig.default or false
-                SubToggleButton.BackgroundColor3 = subEnabled and Color3.fromRGB(138, 43, 226) or Color3.fromRGB(40, 40, 40)
+                local defaultValue = toggleConfig.defaultValue
                 
                 SubToggleButton.MouseButton1Click:Connect(function()
                     subEnabled = not subEnabled
@@ -314,6 +313,8 @@ function UI.CreateWindow()
                 toggleConfig.callback = function(state)
                     if state and subEnabled and originalCallback then
                         originalCallback(subEnabled)
+                    elseif not state and toggleConfig.onDisable then
+                        toggleConfig.onDisable(defaultValue)
                     end
                 end
             end
@@ -344,9 +345,15 @@ speedToggle:AddSlider({
     min = 16,
     max = 150,
     default = 16,
+    defaultValue = 16, -- Default walk speed
     callback = function(value)
         if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
             game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+        end
+    end,
+    onDisable = function(defaultValue)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = defaultValue
         end
     end
 })
