@@ -261,6 +261,63 @@ function UI.CreateWindow()
                 end)
             end
             
+            function Toggle:AddToggle(toggleConfig)
+                local SubToggleHolder = Instance.new("Frame")
+                local SubToggleButton = Instance.new("TextButton")
+                local SubToggleLabel = Instance.new("TextLabel")
+                
+                SubToggleHolder.Name = toggleConfig.text
+                SubToggleHolder.Parent = SettingsHolder
+                SubToggleHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                SubToggleHolder.BorderSizePixel = 0
+                SubToggleHolder.Size = UDim2.new(1, 0, 0, 35)
+                SubToggleHolder.Position = UDim2.new(0, 0, 0, #SettingsHolder:GetChildren() * 35)
+                SubToggleHolder.ZIndex = 3
+                
+                SubToggleLabel.Name = "Label"
+                SubToggleLabel.Parent = SubToggleHolder
+                SubToggleLabel.BackgroundTransparency = 1
+                SubToggleLabel.Position = UDim2.new(0, 8, 0, 0)
+                SubToggleLabel.Size = UDim2.new(1, -50, 1, 0)
+                SubToggleLabel.Font = Enum.Font.SourceSans
+                SubToggleLabel.Text = toggleConfig.text
+                SubToggleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+                SubToggleLabel.TextSize = 14
+                SubToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+                SubToggleLabel.ZIndex = 3
+                
+                SubToggleButton.Name = "Toggle"
+                SubToggleButton.Parent = SubToggleHolder
+                SubToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                SubToggleButton.BorderSizePixel = 0
+                SubToggleButton.Position = UDim2.new(1, -42, 0.5, -10)
+                SubToggleButton.Size = UDim2.new(0, 34, 0, 20)
+                SubToggleButton.Font = Enum.Font.SourceSans
+                SubToggleButton.Text = ""
+                SubToggleButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+                SubToggleButton.TextSize = 14
+                SubToggleButton.ZIndex = 3
+                
+                local subEnabled = toggleConfig.default or false
+                SubToggleButton.BackgroundColor3 = subEnabled and Color3.fromRGB(138, 43, 226) or Color3.fromRGB(40, 40, 40)
+                
+                SubToggleButton.MouseButton1Click:Connect(function()
+                    subEnabled = not subEnabled
+                    SubToggleButton.BackgroundColor3 = subEnabled and Color3.fromRGB(138, 43, 226) or Color3.fromRGB(40, 40, 40)
+                    if toggleConfig.callback and enabled then
+                        toggleConfig.callback(subEnabled)
+                    end
+                end)
+                
+                -- Update the main toggle callback to handle sub-toggle state
+                local originalCallback = toggleConfig.callback
+                toggleConfig.callback = function(state)
+                    if state and subEnabled and originalCallback then
+                        originalCallback(subEnabled)
+                    end
+                end
+            end
+            
             return Toggle
         end
         
