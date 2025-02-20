@@ -322,6 +322,83 @@ function UI.CreateWindow()
             return Toggle
         end
         
+        function Category:CreateButton(buttonConfig)
+            local Button = {}
+            
+            local ButtonInstance = Instance.new("TextButton")
+            ButtonInstance.Name = buttonConfig.text
+            ButtonInstance.Parent = ModuleHolder
+            ButtonInstance.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            ButtonInstance.BackgroundTransparency = 0.3
+            ButtonInstance.Size = UDim2.new(1, 0, 0, 20)
+            
+            -- Position based on number of existing buttons
+            local buttonCount = 0
+            for _, child in pairs(ModuleHolder:GetChildren()) do
+                if child:IsA("TextButton") then
+                    buttonCount = buttonCount + 1
+                end
+            end
+            ButtonInstance.Position = UDim2.new(0, 0, 0, (buttonCount - 1) * 20)
+            
+            ButtonInstance.Font = Enum.Font.SourceSans
+            ButtonInstance.Text = buttonConfig.text
+            ButtonInstance.TextColor3 = Color3.fromRGB(200, 200, 200)
+            ButtonInstance.TextSize = 14
+            ButtonInstance.TextXAlignment = Enum.TextXAlignment.Center
+            ButtonInstance.BorderSizePixel = 0
+            
+            -- Hover effect
+            ButtonInstance.MouseEnter:Connect(function()
+                ButtonInstance.BackgroundTransparency = 0.1
+            end)
+            
+            ButtonInstance.MouseLeave:Connect(function()
+                ButtonInstance.BackgroundTransparency = 0.3
+            end)
+            
+            -- Click effect
+            ButtonInstance.MouseButton1Click:Connect(function()
+                ButtonInstance.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+                wait(0.1)
+                ButtonInstance.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                if buttonConfig.callback then
+                    buttonConfig.callback()
+                end
+            end)
+            
+            return Button
+        end
+        
+        function Category:CreateLabel(text)
+            local Label = {}
+            
+            local LabelInstance = Instance.new("TextLabel")
+            LabelInstance.Name = text
+            LabelInstance.Parent = ModuleHolder
+            LabelInstance.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            LabelInstance.BackgroundTransparency = 0.3
+            LabelInstance.Size = UDim2.new(1, 0, 0, 20)
+            
+            -- Position based on number of existing elements
+            local elementCount = 0
+            for _, child in pairs(ModuleHolder:GetChildren()) do
+                if child:IsA("TextLabel") or child:IsA("TextButton") then
+                    elementCount = elementCount + 1
+                end
+            end
+            LabelInstance.Position = UDim2.new(0, 0, 0, (elementCount - 1) * 20)
+            
+            LabelInstance.Font = Enum.Font.SourceSans
+            LabelInstance.Text = text
+            LabelInstance.TextColor3 = Color3.fromRGB(200, 200, 200)
+            LabelInstance.TextSize = 14
+            LabelInstance.TextXAlignment = Enum.TextXAlignment.Center
+            LabelInstance.BorderSizePixel = 0
+            
+            return Label
+        end
+        
         table.insert(categories, Category)
         return Category
     end
