@@ -7,19 +7,43 @@ local visuals = window:CreateCategory("Visuals")
 -- Shortcuts
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local noClipConnection = nil
 
 movement:CreateToggle({
     text = "No Clip",
     callback = function(state)
         if state then
-            game.Players.LocalPlayer.Character.Humanoid.Changed:Connect(function()
-                if game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CanCollide = false
+            -- Disconnect existing connection if any
+            if noClipConnection then
+                noClipConnection:Disconnect()
+            end
+            
+            -- Create new connection to handle noclip
+            noClipConnection = RunService.Heartbeat:Connect(function()
+                if LocalPlayer.Character then
+                    for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
                 end
             end)
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CanCollide = false
         else
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CanCollide = true
+            -- Disconnect and restore collision
+            if noClipConnection then
+                noClipConnection:Disconnect()
+                noClipConnection = nil
+            end
+            
+            if LocalPlayer.Character then
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
         end
     end
 })
