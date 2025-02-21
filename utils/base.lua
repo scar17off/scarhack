@@ -9,8 +9,12 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
-local noClipConnection = nil
+-- External loader of seperate modules
+loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/utils/replaybot.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/utils/tas.lua"))()
 
+-- No Clip
+local noClipConnection = nil
 movement:CreateToggle({
     text = "No Clip",
     callback = function(state)
@@ -98,7 +102,6 @@ jumpToggle:AddSlider({
     end
 })
 
---[[ Visuals ]]
 -- Freecam
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -263,6 +266,85 @@ visuals:CreateToggle({
                     humanoid.JumpPower = 50
                 end
             end
+        end
+    end
+})
+
+-- Dev Textures
+-- Constants and helpers
+local TEXTURES = {
+    GREY = "rbxassetid://78071731233259",
+    ORANGE = "rbxassetid://120981721004720"
+}
+
+local ORANGE_MATERIALS = {
+    [Enum.Material.Wood] = true,
+    [Enum.Material.WoodPlanks] = true,
+    [Enum.Material.Sand] = true,
+    [Enum.Material.Ground] = true,
+    [Enum.Material.Grass] = true,
+    [Enum.Material.Concrete] = true,
+    [Enum.Material.Brick] = true,
+}
+
+local appliedTextures = {}
+
+local function isPlayerCharacter(model)
+    if Players:GetPlayerFromCharacter(model) then
+        return true
+    end
+    if model.Name:match("^FakeCharacter_") then
+        return true
+    end
+    return false
+end
+
+local function getTextureForMaterial(material)
+    return ORANGE_MATERIALS[material] and TEXTURES.ORANGE or TEXTURES.GREY
+end
+
+visuals:CreateToggle({
+    text = "Dev Textures",
+    callback = function(enabled)
+        if enabled then
+            -- Apply textures
+            for _, part in ipairs(workspace:GetDescendants()) do
+                local model = part:FindFirstAncestorWhichIsA("Model")
+                if model and isPlayerCharacter(model) then
+                    continue
+                end
+
+                if part:IsA("BasePart") and not part:IsA("Terrain") then
+                    pcall(function()
+                        local texture = Instance.new("Texture")
+                        texture.Texture = getTextureForMaterial(part.Material)
+                        texture.Face = Enum.NormalId.Front
+                        texture.StudsPerTileU = 2
+                        texture.StudsPerTileV = 2
+                        texture.Parent = part
+
+                        if not appliedTextures[part] then
+                            appliedTextures[part] = {}
+                        end
+                        table.insert(appliedTextures[part], texture)
+
+                        for _, face in ipairs({Enum.NormalId.Back, Enum.NormalId.Top, Enum.NormalId.Bottom, Enum.NormalId.Left, Enum.NormalId.Right}) do
+                            local faceTexture = texture:Clone()
+                            faceTexture.Face = face
+                            faceTexture.Parent = part
+                            table.insert(appliedTextures[part], faceTexture)
+                        end
+                    end)
+                end
+            end
+        else
+            -- Remove textures
+            for part, textures in pairs(appliedTextures) do
+                for _, texture in ipairs(textures) do
+                    pcall(function() texture:Destroy() end)
+                end
+            end
+            appliedTextures = {}
         end
     end
 })
