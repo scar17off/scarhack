@@ -437,12 +437,12 @@ function UI.CreateWindow()
             
             -- Click effect
             ButtonInstance.MouseButton1Click:Connect(function()
-                ButtonInstance.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-                wait(0.1)
-                ButtonInstance.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
                 if buttonConfig.callback then
                     buttonConfig.callback()
                 end
+                ButtonInstance.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+                wait(0.1)
+                ButtonInstance.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
             end)
             
             return Button
