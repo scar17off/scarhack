@@ -12,7 +12,9 @@ local RunService = game:GetService("RunService")
 -- External loader of seperate modules
 loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/utils/replaybot.lua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/utils/tas.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/utils/placement.lua"))()
 
+-- [Movement]
 -- No Clip
 local noClipConnection = nil
 movement:CreateToggle({
@@ -102,6 +104,7 @@ jumpToggle:AddSlider({
     end
 })
 
+-- [Visuals]
 -- Freecam
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
