@@ -3,6 +3,106 @@ local UserInputService = game:GetService("UserInputService")
 
 local window = UI.CreateWindow()
 
+-- TAS Manager Class
+local TASManager = {}
+TASManager.__index = TASManager
+
+function TASManager.new()
+    local self = setmetatable({}, TASManager)
+    self.actions = {}
+    self.tickRate = 60
+    return self
+end
+
+function TASManager:setRecording(actions, tickRate)
+    self.actions = actions or {}
+    self.tickRate = tickRate or 60
+end
+
+function TASManager:getRecording()
+    return self.actions, self.tickRate
+end
+
+function TASManager:exportString()
+    local data = {
+        actions = {},
+        tickRate = self.tickRate
+    }
+    
+    for _, action in ipairs(self.actions) do
+        local serializedAction = {
+            tick = action.tick,
+            time = action.time,
+            inputs = action.inputs,
+            cframe = action.cframe and {action.cframe.X, action.cframe.Y, action.cframe.Z, action.cframe:toEulerAnglesXYZ()} or nil  -- Convert CFrame to table
+        }
+        table.insert(data.actions, serializedAction)
+    end
+    
+    local success, encoded = pcall(function()
+        return game:GetService("HttpService"):JSONEncode(data)
+    end)
+    
+    if success then
+        return encoded
+    end
+    return nil
+end
+
+function TASManager:importString(str)
+    local success, decoded = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(str)
+    end)
+    
+    if success and decoded and decoded.actions then
+        self.actions = {}
+        for _, action in ipairs(decoded.actions) do
+            local cframe = action.cframe and CFrame.new(action.cframe[1], action.cframe[2], action.cframe[3]) * CFrame.fromEulerAnglesXYZ(action.cframe[4], action.cframe[5], action.cframe[6]) or nil  -- Convert table back to CFrame
+            table.insert(self.actions, {
+                tick = action.tick,
+                time = action.time,
+                inputs = action.inputs,
+                cframe = cframe
+            })
+        end
+        self.tickRate = decoded.tickRate or 60
+        return true
+    end
+    print("Failed to import TAS: Invalid format or data.")
+    return false
+end
+
+function TASManager:saveTAS(fileName)
+    local encoded = self:exportString()
+    print(encoded)
+    if encoded then
+        pcall(function()
+            print(("tas/")..fileName..".tas")
+            writefile(("tas/")..fileName..".tas", encoded)
+        end)
+        return true
+    end
+    return false
+end
+
+function TASManager:loadTAS(fileName)
+    local success, content = pcall(function()
+        return readfile("tas/"..fileName..".tas")
+    end)
+    
+    if success then
+        if not self:importString(content) then
+            print("Failed to load TAS from file: " .. fileName)
+        end
+        return true
+    end
+    print("Failed to read TAS file: " .. fileName)
+    return false
+end
+
+-- Create TAS manager instance
+local tasManager = TASManager.new()
+
 -- Categories
 local TAS = window:CreateCategory("TAS")
 
@@ -28,13 +128,23 @@ local playbackConnection = nil
 local lastRecordedTime = 0
 local controlling = false
 
-
 -- Pathfinding
 local PathfindingService = game:GetService("PathfindingService")
 local autoPilot = false
 local currentPath = nil
 local pathVisual = nil
 local targetPosition = nil
+
+local TASDirectory = "tas/"
+local fileType = ".tas"
+
+local fileNameInput = ""
+
+pcall(function()
+    if not isfolder(TASDirectory) then
+        makefolder(TASDirectory)
+    end
+end)
 
 -- Function to create fake character
 local function createFakeCharacter()
@@ -483,7 +593,7 @@ local recordToggle = TAS:CreateToggle({
         if value then
             -- Reset recording state
             currentTick = 1
-            recordedActions = {}
+            recordedActions = {}  -- Clear recorded actions for new recording
             lastRecordedTime = tick()
             
             -- Create fake character if it doesn't exist
@@ -729,6 +839,42 @@ local autoPilotToggle = TAS:CreateToggle({
             end
             currentPath = nil
             targetPosition = nil
+        end
+    end
+})
+
+local fileToggle = TAS:CreateToggle({
+    text = "File Operations"
+})
+
+fileToggle:AddTextbox({
+    text = "File Name",
+    placeholder = "Enter file name",
+    callback = function(text)
+        fileNameInput = text
+    end
+})
+
+TAS:CreateButton({
+    text = "Save",
+    callback = function()
+        if fileNameInput ~= "" then
+            tasManager:setRecording(recordedActions, tickRate)
+            tasManager:saveTAS(fileNameInput)
+            recordedActions = {}
+        end
+    end
+})
+
+TAS:CreateButton({
+    text = "Load", 
+    callback = function()
+        if fileNameInput ~= "" then
+            recordedActions = {}
+            if tasManager:loadTAS(fileNameInput) then
+                currentTick = 1
+                recordedActions, tickRate = tasManager:getRecording()
+            end
         end
     end
 })

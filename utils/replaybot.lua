@@ -100,4 +100,4 @@ local playbackToggle = Replay:CreateToggle({
             end
         end
     end
-}) 
+})
