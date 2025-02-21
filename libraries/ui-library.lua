@@ -130,8 +130,15 @@ function UI.CreateWindow()
                 settingsOpen = not settingsOpen
                 SettingsHolder.Visible = settingsOpen
                 
-                -- Calculate the height of settings
-                local settingsHeight = #SettingsHolder:GetChildren() * 35
+                -- Calculate the height of settings (remove extra spacing)
+                local settingsHeight = 0
+                for _, child in pairs(SettingsHolder:GetChildren()) do
+                    if child:IsA("Frame") then  -- Count only the actual setting holders
+                        settingsHeight = settingsHeight + child.Size.Y.Offset
+                        -- Position each settings element directly after the previous one
+                        child.Position = UDim2.new(0, 0, 0, settingsHeight - child.Size.Y.Offset)
+                    end
+                end
                 
                 -- Update settings size
                 SettingsHolder.Size = UDim2.new(1, 0, 0, settingsOpen and settingsHeight or 0)
@@ -322,6 +329,70 @@ function UI.CreateWindow()
                         originalCallback(subEnabled)
                     elseif not state and toggleConfig.onDisable then
                         toggleConfig.onDisable(defaultValue)
+                    end
+                end
+            end
+            
+            function Toggle:AddTextbox(textboxConfig)
+                local TextboxHolder = Instance.new("Frame")
+                local TextboxLabel = Instance.new("TextLabel")
+                local TextboxInput = Instance.new("TextBox")
+                
+                TextboxHolder.Name = textboxConfig.text
+                TextboxHolder.Parent = SettingsHolder
+                TextboxHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                TextboxHolder.BorderSizePixel = 0
+                TextboxHolder.Size = UDim2.new(1, 0, 0, 40)
+                TextboxHolder.ZIndex = 3
+                
+                TextboxLabel.Name = "Label"
+                TextboxLabel.Parent = TextboxHolder
+                TextboxLabel.BackgroundTransparency = 1
+                TextboxLabel.Position = UDim2.new(0, 8, 0, 0)
+                TextboxLabel.Size = UDim2.new(1, -16, 0, 20)
+                TextboxLabel.Font = Enum.Font.SourceSans
+                TextboxLabel.Text = textboxConfig.text
+                TextboxLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+                TextboxLabel.TextSize = 14
+                TextboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextboxLabel.ZIndex = 3
+                
+                TextboxInput.Name = "Input"
+                TextboxInput.Parent = TextboxHolder
+                TextboxInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                TextboxInput.BorderSizePixel = 0
+                TextboxInput.Position = UDim2.new(0, 8, 0, 20)
+                TextboxInput.Size = UDim2.new(1, -16, 0, 16)
+                TextboxInput.Font = Enum.Font.SourceSans
+                TextboxInput.PlaceholderText = textboxConfig.placeholder or ""
+                TextboxInput.Text = textboxConfig.default or ""
+                TextboxInput.TextColor3 = Color3.fromRGB(200, 200, 200)
+                TextboxInput.TextSize = 14
+                TextboxInput.ClearTextOnFocus = textboxConfig.clearOnFocus ~= false
+                TextboxInput.ZIndex = 3
+
+                -- Handle text input
+                TextboxInput.FocusLost:Connect(function(enterPressed)
+                    if textboxConfig.callback and enabled then
+                        textboxConfig.callback(TextboxInput.Text, enterPressed)
+                    end
+                end)
+
+                -- Update the main toggle callback to handle textbox state
+                local originalCallback = toggleConfig.callback
+                toggleConfig.callback = function(state)
+                    enabled = state
+                    if state then
+                        if textboxConfig.callback then
+                            textboxConfig.callback(TextboxInput.Text, false)
+                        end
+                    else
+                        if textboxConfig.onDisable then
+                            textboxConfig.onDisable(textboxConfig.default or "")
+                        end
+                    end
+                    if originalCallback then
+                        originalCallback(state)
                     end
                 end
             end
