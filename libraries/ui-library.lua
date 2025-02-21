@@ -98,11 +98,10 @@ function UI.CreateWindow()
             
             -- Settings holder
             SettingsHolder = Instance.new("Frame")
-            SettingsHolder.Name = "Settings"
+            SettingsHolder.Name = "Settings_" .. toggleConfig.text
             SettingsHolder.Parent = ModuleHolder
             SettingsHolder.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
             SettingsHolder.BorderSizePixel = 0
-            SettingsHolder.Position = UDim2.new(0, 0, 0, ToggleButton.Position.Y.Offset + 20)
             SettingsHolder.Size = UDim2.new(1, 0, 0, 0)
             SettingsHolder.Visible = false
             SettingsHolder.ZIndex = 2
@@ -137,17 +136,25 @@ function UI.CreateWindow()
                 -- Update settings size
                 SettingsHolder.Size = UDim2.new(1, 0, 0, settingsOpen and settingsHeight or 0)
                 
-                -- Update positions of all buttons
+                -- Update positions of all buttons and their settings
                 local currentOffset = 0
                 for _, child in pairs(ModuleHolder:GetChildren()) do
                     if child:IsA("TextButton") then
+                        -- Position the button
                         child.Position = UDim2.new(0, 0, 0, currentOffset)
                         currentOffset = currentOffset + 20
                         
-                        -- If this is the current toggle and settings are open, add settings height
-                        if child == ToggleButton and settingsOpen then
-                            currentOffset = currentOffset + settingsHeight
+                        -- Find and position its settings holder
+                        local settingsHolder = ModuleHolder:FindFirstChild("Settings_" .. child.Name)
+                        if settingsHolder then
+                            settingsHolder.Position = UDim2.new(0, 0, 0, currentOffset)
+                            if settingsHolder.Visible then
+                                currentOffset = currentOffset + settingsHolder.Size.Y.Offset
+                            end
                         end
+                    elseif child:IsA("TextLabel") then
+                        child.Position = UDim2.new(0, 0, 0, currentOffset)
+                        currentOffset = currentOffset + 20
                     end
                 end
             end)
