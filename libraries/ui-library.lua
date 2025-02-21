@@ -477,6 +477,70 @@ function UI.CreateWindow()
             return Label
         end
         
+        function Category:CreateTextbox(textboxConfig)
+            local TextboxHolder = Instance.new("Frame")
+            local TextboxLabel = Instance.new("TextLabel")
+            local TextboxInput = Instance.new("TextBox")
+            
+            TextboxHolder.Name = textboxConfig.text
+            TextboxHolder.Parent = ModuleHolder
+            TextboxHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            TextboxHolder.BackgroundTransparency = 0.3
+            TextboxHolder.Size = UDim2.new(1, 0, 0, 40)
+            
+            -- Position based on number of existing elements
+            local elementCount = 0
+            for _, child in pairs(ModuleHolder:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("TextButton") or child:IsA("TextLabel") then
+                    elementCount = elementCount + 1
+                end
+            end
+            TextboxHolder.Position = UDim2.new(0, 0, 0, (elementCount - 1) * 20)
+            TextboxHolder.BorderSizePixel = 0
+            
+            TextboxLabel.Name = "Label"
+            TextboxLabel.Parent = TextboxHolder
+            TextboxLabel.BackgroundTransparency = 1
+            TextboxLabel.Position = UDim2.new(0, 8, 0, 0)
+            TextboxLabel.Size = UDim2.new(1, -16, 0, 20)
+            TextboxLabel.Font = Enum.Font.SourceSans
+            TextboxLabel.Text = textboxConfig.text
+            TextboxLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            TextboxLabel.TextSize = 14
+            TextboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+            
+            TextboxInput.Name = "Input"
+            TextboxInput.Parent = TextboxHolder
+            TextboxInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            TextboxInput.BorderSizePixel = 0
+            TextboxInput.Position = UDim2.new(0, 8, 0, 20)
+            TextboxInput.Size = UDim2.new(1, -16, 0, 16)
+            TextboxInput.Font = Enum.Font.SourceSans
+            TextboxInput.PlaceholderText = textboxConfig.placeholder or ""
+            TextboxInput.Text = textboxConfig.default or ""
+            TextboxInput.TextColor3 = Color3.fromRGB(200, 200, 200)
+            TextboxInput.TextSize = 14
+            TextboxInput.ClearTextOnFocus = textboxConfig.clearOnFocus ~= false
+            
+            -- Handle text input
+            TextboxInput.FocusLost:Connect(function(enterPressed)
+                if textboxConfig.callback then
+                    textboxConfig.callback(TextboxInput.Text, enterPressed)
+                end
+            end)
+            
+            -- Hover effect
+            TextboxHolder.MouseEnter:Connect(function()
+                TextboxHolder.BackgroundTransparency = 0.1
+            end)
+            
+            TextboxHolder.MouseLeave:Connect(function()
+                TextboxHolder.BackgroundTransparency = 0.3
+            end)
+            
+            return TextboxInput
+        end
+        
         table.insert(categories, Category)
         return Category
     end
