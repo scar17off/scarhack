@@ -11,6 +11,7 @@ function TASManager.new()
     local self = setmetatable({}, TASManager)
     self.actions = {}
     self.tickRate = 60
+    self.tasPath = game.PlaceId.."/tas/"
     return self
 end
 
@@ -77,8 +78,7 @@ function TASManager:saveTAS(fileName)
     print(encoded)
     if encoded then
         pcall(function()
-            print(("tas/")..fileName..".tas")
-            writefile(("tas/")..fileName..".tas", encoded)
+            writefile(self.tasPath..fileName..".tas", encoded)
         end)
         return true
     end
@@ -87,7 +87,7 @@ end
 
 function TASManager:loadTAS(fileName)
     local success, content = pcall(function()
-        return readfile("tas/"..fileName..".tas")
+        return readfile(self.tasPath..fileName..".tas")
     end)
     
     if success then
