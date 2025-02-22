@@ -6,7 +6,8 @@ local Placement = window:CreateCategory("Placement")
 local config = {
     deleteEnabled = false,
     createEnabled = false,
-    partSize = Vector3.new(0.5, 0.5, 0.5)
+    partSize = Vector3.new(0.5, 0.5, 0.5),
+    climbable = false
 }
 
 -- Event connections storage
@@ -57,6 +58,7 @@ local function onCreateClick()
     newPart.Position = previewPart.Position
     newPart.Size = config.partSize
     newPart.Color = Color3.new(1, 1, 1)
+    newPart.CanTouch = config.climbable
 
     -- Set collision group for placed parts
     pcall(function()
@@ -153,6 +155,13 @@ createToggle:AddSlider({
     default = 0.5,
     callback = function(value)
         config.partSize = Vector3.new(config.partSize.X, config.partSize.Y, value)
+    end
+})
+
+createToggle:AddToggle({
+    text = "Climbable",
+    callback = function(enabled)
+        config.climbable = enabled
     end
 })
 
