@@ -13,9 +13,10 @@ A Roblox script hub with support for multiple games.
 
 ## Supported Games
 
-- [Arsenal](places/286090429.lua) - `286090429`
-- [AniPhobia](places/6788434697.lua) - `6788434697`
-- [Forsaken](places/18687417158.lua) - `18687417158`
+- [Arsenal](places/286090429.lua)
+- [AniPhobia](places/6788434697.lua)
+- [Forsaken](places/18687417158.lua)
+- [Tower of Hell](places/1962086868.lua)
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`
@@ -47,6 +48,13 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 
 ### AniPhobia
 - Auto Farm (2 methods)
+
+### Forsaken
+- ESP System
+
+### Tower of Hell
+- Godmode
+- Finish
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
