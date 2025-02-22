@@ -302,7 +302,6 @@ AutoFarm2Section:CreateToggle("Target Bosses", false, function(Value)
     AUTO_FARM_2_INCLUDE_BOSSES = Value
 end)
 
--- Add the new section controls
 FreezeSection:CreateToggle("Range Freeze", false, function(Value)
     RANGE_FREEZE = Value
 end)
@@ -311,7 +310,6 @@ FreezeSection:CreateSlider("Freeze Range", 5, 100, 30, true, function(Value)
     FREEZE_RANGE = Value
 end)
 
--- Add Aimbot controls
 local AimbotToggle = AimbotSection:CreateToggle("Enable Aimbot", false, function(Value)
     AIMBOT_ENABLED = Value
 end)

@@ -64,7 +64,7 @@ category:CreateButton({
             local startPos = humanoidRootPart.Position
             local endPos = FinishPart.Position - Vector3.new(8, 6, 0)
             local distance = (endPos - startPos).Magnitude
-            local duration = distance / 60 -- Slightly slower for the spiral
+            local duration = distance / 60
             
             local startTime = tick()
             local connection
