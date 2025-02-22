@@ -46,8 +46,9 @@ ESP:CreateToggle({
     end
 })
 
+-- Pickup Bone
 ESP:CreateButton({
-    text = "Pickup Bone",
+    text = "Pickup Bone", 
     callback = function()
         local connection
         connection = game:GetService("RunService").Heartbeat:Connect(function()
@@ -55,7 +56,19 @@ ESP:CreateButton({
             if bone then
                 local prompt = bone:FindFirstChild("ProximityPrompt")
                 if prompt then
-                    fireproximityprompt(prompt)
+                    local player = game.Players.LocalPlayer
+                    local character = player.Character
+                    if character then
+                        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                        if humanoidRootPart then
+                            local originalPosition = humanoidRootPart.CFrame
+                            humanoidRootPart.CFrame = bone.CFrame
+                            task.wait(0.1)
+                            fireproximityprompt(prompt)
+                            task.wait(0.1)
+                            humanoidRootPart.CFrame = originalPosition
+                        end
+                    end
                 end
             end
         end)
@@ -72,7 +85,19 @@ ESP:CreateButton({
             if fuse then
                 local prompt = fuse:FindFirstChild("ProximityPrompt")
                 if prompt then
-                    fireproximityprompt(prompt)
+                    local player = game.Players.LocalPlayer
+                    local character = player.Character
+                    if character then
+                        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                        if humanoidRootPart then
+                            local originalPosition = humanoidRootPart.CFrame
+                            humanoidRootPart.CFrame = fuse.CFrame
+                            task.wait(0.1)
+                            fireproximityprompt(prompt)
+                            task.wait(0.1)
+                            humanoidRootPart.CFrame = originalPosition
+                        end
+                    end
                 end
             end
         end)
