@@ -18,8 +18,9 @@ A Roblox script hub with support for multiple games.
 - [Forsaken](places/18687417158.lua) - `18687417158`
 
 ## Utils
-- [TAS](utils/tas.lua) - `tas`
-- [Replay Bot](utils/replaybot.lua) - `replaybot`
+- [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`
+- [Placement](utils/placement.lua) - `Place and delete parts`
+- [Replaybot](utils/replaybot.lua) - `Replay your movements`
 
 ## Usage
 
