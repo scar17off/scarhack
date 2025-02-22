@@ -3,6 +3,7 @@ local window = UI.CreateWindow()
 
 local movement = window:CreateCategory("Movement")
 local visuals = window:CreateCategory("Visuals")
+local scripts = window:CreateCategory("Scripts")
 
 -- Shortcuts
 local Players = game:GetService("Players")
@@ -384,5 +385,27 @@ visuals:CreateToggle({
             Lighting.FogEnd = originalFogEnd
             Lighting.GlobalShadows = originalGlobalShadows
         end
+    end
+})
+
+-- [Scripts]
+scripts:CreateButton({
+    text = "DEV V2",
+    callback = function()
+        loadstring(game:HttpGet("https://cdn.wearedevs.net/scripts/Dex%20Explorer%20V2.txt"))()
+    end
+})
+
+scripts:CreateButton({
+    text = "DEV V4",
+    callback = function()
+        loadstring(game:HttpGet("https://gist.githubusercontent.com/dannythehacker/1781582ab545302f2b34afc4ec53e811/raw/ee5324771f017073fc30e640323ac2a9b3bfc550/dark%2520dex%2520v4"))()
+    end
+})
+
+scripts:CreateButton({
+    text = "Infinite Yield",
+    callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
     end
 })
