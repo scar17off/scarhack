@@ -63,3 +63,30 @@ ESP:CreateButton({
         getfenv(1)._bonePromptConnection = connection
     end
 })
+
+-- Hide doors
+ESP:CreateToggle({
+    text = "Hide Doors",
+    default = false,
+    callback = function(value)
+        local transparency = 0
+        local collide = false
+
+        if value then
+            transparency = 1
+            collide = true
+        end
+
+        local doorPaths = {workspace.House.Doors, workspace.House.Outside.Doors}
+        for _, doorFolder in doorPaths do
+            for _, door in doorFolder:GetChildren() do
+                for _, part in door:GetDescendants() do
+                    pcall(function()
+                        part.Transparency = transparency
+                        part.CanCollide = collide
+                    end)
+                end
+            end
+        end
+    end
+})
