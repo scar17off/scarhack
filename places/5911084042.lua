@@ -59,8 +59,23 @@ ESP:CreateButton({
                 end
             end
         end)
-        
-        getfenv(1)._bonePromptConnection = connection
+    end
+})
+
+-- Fix Fuse
+ESP:CreateButton({
+    text = "Fix Fuse",
+    callback = function()
+        local connection
+        connection = game:GetService("RunService").Heartbeat:Connect(function()
+            local fuse = workspace.House.FuseBox
+            if fuse then
+                local prompt = fuse:FindFirstChild("ProximityPrompt")
+                if prompt then
+                    fireproximityprompt(prompt)
+                end
+            end
+        end)
     end
 })
 
