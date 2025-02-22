@@ -17,6 +17,7 @@ A Roblox script hub with support for multiple games.
 - [AniPhobia](places/6788434697.lua)
 - [Forsaken](places/18687417158.lua)
 - [Tower of Hell](places/1962086868.lua)
+- [Specter](places/5911084042.lua)
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`
@@ -32,7 +33,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 ## Features
 
 ### Arsenal
-- ESP System
+- ESP
   - Boxes
   - Names
   - Tracers
@@ -50,11 +51,14 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 - Auto Farm (2 methods)
 
 ### Forsaken
-- ESP System
+- ESP
 
 ### Tower of Hell
 - Godmode
 - Finish
+
+### Specter
+- ESP
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
