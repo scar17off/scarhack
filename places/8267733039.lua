@@ -7,7 +7,6 @@ local SoundService = game:GetService("SoundService")
 
 -- Categories
 local ESP = window:CreateCategory("ESP")
-local Evidences = window:CreateCategory("Evidences")
 
 -- Initial ESP setup
 ESPLibrary:AddObjectListener(workspace.Dynamic.Evidence.EMF, {
@@ -62,6 +61,8 @@ ESP:CreateToggle({
 })
 
 -- Evidence Information
+local Evidences = window:CreateCategory("Evidences")
+
 local evidenceLabel_1 = Evidences:CreateLabel("N/A")
 local evidenceLabel_2 = Evidences:CreateLabel("N/A")
 local evidenceLabel_3 = Evidences:CreateLabel("N/A")
@@ -205,3 +206,71 @@ workspace.Dynamic.Evidence.MotionGrids.ChildAdded:Connect(function(child)
         end)
     end
 end)
+
+-- Monitor for freezing temperatures
+local function checkThermometer(thermometer)
+    if not table.find(evidenceFound, "Freezing") then
+        local tempLabel = thermometer:FindFirstChild("Temp")
+        if tempLabel and tempLabel:FindFirstChild("SurfaceGui") then
+            local textLabel = tempLabel.SurfaceGui:FindFirstChild("TextLabel")
+            if textLabel and string.match(textLabel.Text, "^%-") then
+                table.insert(evidenceFound, "Freezing")
+                -- Update first available label
+                if evidenceLabel_1:GetText() == "N/A" then
+                    evidenceLabel_1:SetText("Freezing")
+                elseif evidenceLabel_2:GetText() == "N/A" then
+                    evidenceLabel_2:SetText("Freezing")
+                elseif evidenceLabel_3:GetText() == "N/A" then
+                    evidenceLabel_3:SetText("Freezing")
+                end
+            end
+        end
+    end
+end
+
+local function setupThermometerMonitoring(thermometer)
+    if thermometer then
+        -- Check initial state
+        checkThermometer(thermometer)
+        
+        -- Monitor for text changes
+        local tempLabel = thermometer:FindFirstChild("Temp")
+        if tempLabel and tempLabel:FindFirstChild("SurfaceGui") then
+            local textLabel = tempLabel.SurfaceGui:FindFirstChild("TextLabel")
+            if textLabel then
+                textLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                    checkThermometer(thermometer)
+                end)
+            end
+        end
+    end
+end
+
+-- Monitor Equipment folder
+workspace.Equipment.ChildAdded:Connect(function(child)
+    if child.Name == "Thermometer" then
+        setupThermometerMonitoring(child)
+    end
+end)
+
+-- Monitor Character's EquipmentModel
+if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
+    workspace.Character.EquipmentModel.ChildAdded:Connect(function(child)
+        if child.Name == "Thermometer" then
+            setupThermometerMonitoring(child)
+        end
+    end)
+end
+
+-- Check for existing thermometers
+local equipmentThermometer = workspace.Equipment:FindFirstChild("Thermometer")
+if equipmentThermometer then
+    setupThermometerMonitoring(equipmentThermometer)
+end
+
+if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
+    local characterThermometer = workspace.Character.EquipmentModel:FindFirstChild("Thermometer")
+    if characterThermometer then
+        setupThermometerMonitoring(characterThermometer)
+    end
+end
