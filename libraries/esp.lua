@@ -83,31 +83,21 @@ function ESP:GetPlrFromChar(char)
 end
 
 function ESP:Toggle(bool)
-    self.Enabled = bool
-    -- Toggle visibility of all components
-    for i,v in pairs(self.Objects) do
-        if v.Type == "Box" then
-            for i2,v2 in pairs(v.Components) do
-                if typeof(v2) ~= "Instance" then  -- Skip Highlight instance
-                    v2.Visible = false  -- First set all to false
-                    if bool then  -- Then selectively enable based on settings
-                        if i2 == "Quad" then
-                            v2.Visible = self.Boxes
-                        elseif i2 == "Name" then
-                            v2.Visible = self.Names
-                        elseif i2 == "Distance" then
-                            v2.Visible = self.Distance
-                        elseif i2 == "Tracer" then
-                            v2.Visible = self.Tracers
-                        end
+    ESP.Enabled = bool
+    
+    if not bool then
+        for _, v in pairs(ESP.Objects) do
+            if v.Type == "Box" then
+                for _, component in pairs(v.Components) do
+                    if typeof(component) ~= "Instance" then
+                        component.Visible = false
+                    elseif typeof(component) == "Instance" and component:IsA("Highlight") then
+                        component.Enabled = false
                     end
                 end
             end
-            -- Handle highlight separately
-            if v.Components.Highlight then
-                v.Components.Highlight.Enabled = bool and self.Glow
-            end
         end
+        return
     end
 end
 
@@ -156,11 +146,10 @@ boxBase.__index = boxBase
 function boxBase:Remove()
     ESP.Objects[self.Object] = nil
     for i,v in pairs(self.Components) do
-        if typeof(v) == "Instance" then
-            v:Destroy()
-        else
-            v.Visible = false
+        if typeof(v) ~= "Instance" then
             v:Remove()
+        else
+            v:Destroy()
         end
         self.Components[i] = nil
     end
@@ -168,48 +157,22 @@ end
 
 function boxBase:Update()
     if not self.PrimaryPart then
-        --warn("not supposed to print", self.Object)
         return self:Remove()
     end
 
-    local color
-    if ESP.Highlighted == self.Object then
-       color = ESP.HighlightColor
-    else
-        color = self.Color or self.ColorDynamic and self:ColorDynamic() or ESP:GetColor(self.Object) or ESP.Color
-    end
-
-    local allow = true
-    if ESP.Overrides.UpdateAllow and not ESP.Overrides.UpdateAllow(self) then
-        allow = false
-    end
-    if self.Player and not ESP.TeamMates and ESP:IsTeamMate(self.Player) then
-        allow = false
-    end
-    if self.Player and not ESP.Players then
-        allow = false
-    end
-    local distance = (cam.CFrame.p - self.PrimaryPart.Position).magnitude
-    if distance > ESP.MaxDistance then
-        allow = false
-    end
-    if self.IsEnabled and (type(self.IsEnabled) == "string" and not ESP[self.IsEnabled] or type(self.IsEnabled) == "function" and not self:IsEnabled()) then
-        allow = false
-    end
-    if not workspace:IsAncestorOf(self.PrimaryPart) and not self.RenderInNil then
-        allow = false
-    end
-
-    if not allow then
-        for i,v in pairs(self.Components) do
-            v.Visible = false
+    -- If ESP is disabled, hide everything
+    if not ESP.Enabled then
+        for _, v in pairs(self.Components) do
+            if typeof(v) ~= "Instance" then
+                v.Visible = false
+            elseif typeof(v) == "Instance" and v:IsA("Highlight") then
+                v.Enabled = false
+            end
         end
         return
     end
 
-    if ESP.Highlighted == self.Object then
-        color = ESP.HighlightColor
-    end
+    local color = self.Color or self.ColorDynamic and self:ColorDynamic() or ESP:GetColor(self.Object) or ESP.Color
 
     --calculations--
     local cf = self.PrimaryPart.CFrame
@@ -232,38 +195,59 @@ function boxBase:Update()
         local BottomLeft, Vis3 = WorldToViewportPoint(cam, locs.BottomLeft.p)
         local BottomRight, Vis4 = WorldToViewportPoint(cam, locs.BottomRight.p)
 
-        -- If any point is behind the camera or not visible, hide the box
-        if not (Vis1 and Vis2 and Vis3 and Vis4) then
-            self.Components.Quad.Visible = false
-        else
-            -- Check if points are within screen bounds
-            local success = true
-            local minX = 0
-            local minY = 0
-            local maxX = cam.ViewportSize.X
-            local maxY = cam.ViewportSize.Y
+        -- Check if all points are behind the camera
+        local allBehindCamera = TopLeft.Z < 0 and TopRight.Z < 0 and BottomLeft.Z < 0 and BottomRight.Z < 0
 
-            local points = {TopLeft, TopRight, BottomLeft, BottomRight}
-            for _, point in pairs(points) do
-                if point.X < minX or point.X > maxX or point.Y < minY or point.Y > maxY then
-                    success = false
-                    break
-                end
-            end
+        -- Check if all points are outside the viewport
+        local minX = -100
+        local minY = -100
+        local maxX = cam.ViewportSize.X + 100
+        local maxY = cam.ViewportSize.Y + 100
 
-            if success then
-                self.Components.Quad.Visible = true
-                self.Components.Quad.PointA = Vector2.new(TopRight.X, TopRight.Y)
-                self.Components.Quad.PointB = Vector2.new(TopLeft.X, TopLeft.Y)
-                self.Components.Quad.PointC = Vector2.new(BottomLeft.X, BottomLeft.Y)
-                self.Components.Quad.PointD = Vector2.new(BottomRight.X, BottomRight.Y)
-                self.Components.Quad.Color = color
-            else
-                self.Components.Quad.Visible = false
+        local allOutside = true
+        local points = {TopLeft, TopRight, BottomLeft, BottomRight}
+        for _, point in pairs(points) do
+            if point.X >= minX and point.X <= maxX and point.Y >= minY and point.Y <= maxY then
+                allOutside = false
+                break
             end
         end
+
+        if allBehindCamera or allOutside then
+            self.Components.TopLine.Visible = false
+            self.Components.LeftLine.Visible = false
+            self.Components.RightLine.Visible = false
+            self.Components.BottomLine.Visible = false
+        else
+            -- Top Line
+            self.Components.TopLine.From = Vector2.new(TopLeft.X, TopLeft.Y)
+            self.Components.TopLine.To = Vector2.new(TopRight.X, TopRight.Y)
+            self.Components.TopLine.Visible = true
+            self.Components.TopLine.Color = color
+
+            -- Left Line
+            self.Components.LeftLine.From = Vector2.new(TopLeft.X, TopLeft.Y)
+            self.Components.LeftLine.To = Vector2.new(BottomLeft.X, BottomLeft.Y)
+            self.Components.LeftLine.Visible = true
+            self.Components.LeftLine.Color = color
+
+            -- Right Line
+            self.Components.RightLine.From = Vector2.new(TopRight.X, TopRight.Y)
+            self.Components.RightLine.To = Vector2.new(BottomRight.X, BottomRight.Y)
+            self.Components.RightLine.Visible = true
+            self.Components.RightLine.Color = color
+
+            -- Bottom Line
+            self.Components.BottomLine.From = Vector2.new(BottomLeft.X, BottomLeft.Y)
+            self.Components.BottomLine.To = Vector2.new(BottomRight.X, BottomRight.Y)
+            self.Components.BottomLine.Visible = true
+            self.Components.BottomLine.Color = color
+        end
     else
-        self.Components.Quad.Visible = false
+        self.Components.TopLine.Visible = false
+        self.Components.LeftLine.Visible = false
+        self.Components.RightLine.Visible = false
+        self.Components.BottomLine.Visible = false
     end
 
     if ESP.Names then
@@ -355,14 +339,20 @@ function ESP:Add(obj, options)
         self:GetBox(obj):Remove()
     end
 
-    box.Components["Quad"] = Draw("Quad", {
-        Thickness = self.Thickness,
-        Color = box.Color,
-        Transparency = 1,
-        Filled = false,
-        Visible = self.Enabled and self.Boxes
-    })
-    box.Components["Name"] = Draw("Text", {
+    -- Create lines for the box instead of a Quad
+    box.Components["TopLine"] = Drawing.new("Line")
+    box.Components["LeftLine"] = Drawing.new("Line")
+    box.Components["RightLine"] = Drawing.new("Line")
+    box.Components["BottomLine"] = Drawing.new("Line")
+
+    for _, line in pairs({"TopLine", "LeftLine", "RightLine", "BottomLine"}) do
+        box.Components[line].Visible = false
+        box.Components[line].Thickness = self.Thickness
+        box.Components[line].Color = box.Color
+        box.Components[line].Transparency = 1
+    end
+
+    box.Components["Name"] = Drawing.new("Text", {
         Text = box.Name,
         Color = box.Color,
         Center = true,
@@ -370,7 +360,8 @@ function ESP:Add(obj, options)
         Size = 19,
         Visible = self.Enabled and self.Names
     })
-    box.Components["Distance"] = Draw("Text", {
+
+    box.Components["Distance"] = Drawing.new("Text", {
         Color = box.Color,
         Center = true,
         Outline = true,
@@ -378,44 +369,34 @@ function ESP:Add(obj, options)
         Visible = self.Enabled and self.Names
     })
     
-    box.Components["Tracer"] = Draw("Line", {
+    box.Components["Tracer"] = Drawing.new("Line", {
         Thickness = ESP.Thickness,
         Color = box.Color,
         Transparency = 1,
         Visible = self.Enabled and self.Tracers
     })
+
     self.Objects[obj] = box
     
     obj.AncestryChanged:Connect(function(_, parent)
         if parent == nil and ESP.AutoRemove ~= false then
-            if box.Components.Highlight then
-                box.Components.Highlight:Destroy()
-                box.Components.Highlight = nil
-            end
             box:Remove()
         end
     end)
+
     obj:GetPropertyChangedSignal("Parent"):Connect(function()
         if obj.Parent == nil and ESP.AutoRemove ~= false then
-            if box.Components.Highlight then
-                box.Components.Highlight:Destroy()
-                box.Components.Highlight = nil
-            end
             box:Remove()
         end
     end)
 
     local hum = obj:FindFirstChildOfClass("Humanoid")
-	if hum then
+    if hum then
         hum.Died:Connect(function()
             if ESP.AutoRemove ~= false then
-                if box.Components.Highlight then
-                    box.Components.Highlight:Destroy()
-                    box.Components.Highlight = nil
-                end
                 box:Remove()
             end
-		end)
+        end)
     end
 
     return box
