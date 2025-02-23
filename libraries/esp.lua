@@ -18,6 +18,12 @@ local ESP = {
     GlowTransparency = 0.5,
     MaxDistance = 1000,
     Distance = false,
+    Health = {
+        Enabled = false,
+        Side = "Right", -- "Left", "Right", "Top", "Bottom"
+        Width = 2,
+        FaceCamera = false
+    },
     
     Objects = setmetatable({}, {__mode="kv"}),
     Overrides = {}
@@ -313,6 +319,110 @@ function boxBase:Update()
             self.Components.Highlight = nil
         end
     end
+
+    -- Health Bar
+    if ESP.Health.Enabled then
+        local humanoid = self.Object:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local cf = self.PrimaryPart.CFrame
+            if ESP.Health.FaceCamera then
+                cf = CFrame.new(cf.p, cam.CFrame.p)
+            end
+            local size = self.Size
+            local healthLocs = {
+                TopLeft = cf * ESP.BoxShift * CFrame.new(size.X/2,size.Y/2,0),
+                TopRight = cf * ESP.BoxShift * CFrame.new(-size.X/2,size.Y/2,0),
+                BottomLeft = cf * ESP.BoxShift * CFrame.new(size.X/2,-size.Y/2,0),
+                BottomRight = cf * ESP.BoxShift * CFrame.new(-size.X/2,-size.Y/2,0)
+            }
+
+            local TopLeft, Vis1 = WorldToViewportPoint(cam, healthLocs.TopLeft.p)
+            local TopRight, Vis2 = WorldToViewportPoint(cam, healthLocs.TopRight.p)
+            local BottomLeft, Vis3 = WorldToViewportPoint(cam, healthLocs.BottomLeft.p)
+            local BottomRight, Vis4 = WorldToViewportPoint(cam, healthLocs.BottomRight.p)
+
+            if Vis1 or Vis2 or Vis3 or Vis4 then
+                if not self.Components.HealthBarOutline then
+                    self.Components.HealthBarOutline = Drawing.new("Square")
+                    self.Components.HealthBarOutline.Thickness = 1
+                    self.Components.HealthBarOutline.Filled = true
+                    self.Components.HealthBarOutline.Transparency = 1
+                end
+
+                if not self.Components.HealthBar then
+                    self.Components.HealthBar = Drawing.new("Square")
+                    self.Components.HealthBar.Thickness = 1
+                    self.Components.HealthBar.Filled = true
+                    self.Components.HealthBar.Transparency = 1
+                end
+
+                local healthPercentage = humanoid.Health / humanoid.MaxHealth
+                local healthColor = Color3.new(1 - healthPercentage, healthPercentage, 0)
+                local width = ESP.Health.Width
+                
+                local position = Vector2.new(0, 0)
+                local size = Vector2.new(0, 0)
+                local offset = width + 4
+
+                if ESP.Health.Side == "Left" then
+                    -- Calculate direction vector for proper offset
+                    local dir = (Vector2.new(TopLeft.X, TopLeft.Y) - Vector2.new(TopRight.X, TopRight.Y)).Unit
+                    local perpDir = Vector2.new(-dir.Y, dir.X)
+                    position = Vector2.new(TopLeft.X, TopLeft.Y) + (perpDir * offset)
+                    size = Vector2.new(width, (BottomLeft.Y - TopLeft.Y))
+                elseif ESP.Health.Side == "Right" then
+                    local dir = (Vector2.new(TopRight.X, TopRight.Y) - Vector2.new(TopLeft.X, TopLeft.Y)).Unit
+                    local perpDir = Vector2.new(-dir.Y, dir.X)
+                    position = Vector2.new(TopRight.X, TopRight.Y) + (perpDir * offset)
+                    size = Vector2.new(width, (BottomRight.Y - TopRight.Y))
+                elseif ESP.Health.Side == "Top" then
+                    local dir = (Vector2.new(TopLeft.X, TopLeft.Y) - Vector2.new(BottomLeft.X, BottomLeft.Y)).Unit
+                    local perpDir = Vector2.new(-dir.Y, dir.X)
+                    position = Vector2.new(TopLeft.X, TopLeft.Y) + (perpDir * offset)
+                    size = Vector2.new(TopRight.X - TopLeft.X, width)
+                elseif ESP.Health.Side == "Bottom" then
+                    local dir = (Vector2.new(BottomLeft.X, BottomLeft.Y) - Vector2.new(TopLeft.X, TopLeft.Y)).Unit
+                    local perpDir = Vector2.new(-dir.Y, dir.X)
+                    position = Vector2.new(BottomLeft.X, BottomLeft.Y) + (perpDir * offset)
+                    size = Vector2.new(BottomRight.X - BottomLeft.X, width)
+                end
+
+                -- Update outline
+                self.Components.HealthBarOutline.Position = position
+                self.Components.HealthBarOutline.Size = size
+                self.Components.HealthBarOutline.Color = Color3.new(0, 0, 0)
+                self.Components.HealthBarOutline.Visible = true
+
+                -- Update health bar
+                local healthBarSize = size
+                if ESP.Health.Side == "Left" or ESP.Health.Side == "Right" then
+                    healthBarSize = Vector2.new(size.X, size.Y * healthPercentage)
+                    self.Components.HealthBar.Position = position + Vector2.new(0, size.Y * (1 - healthPercentage))
+                else
+                    healthBarSize = Vector2.new(size.X * healthPercentage, size.Y)
+                    self.Components.HealthBar.Position = position
+                end
+
+                self.Components.HealthBar.Size = healthBarSize
+                self.Components.HealthBar.Color = healthColor
+                self.Components.HealthBar.Visible = true
+            else
+                if self.Components.HealthBarOutline then
+                    self.Components.HealthBarOutline.Visible = false
+                end
+                if self.Components.HealthBar then
+                    self.Components.HealthBar.Visible = false
+                end
+            end
+        end
+    else
+        if self.Components.HealthBarOutline then
+            self.Components.HealthBarOutline.Visible = false
+        end
+        if self.Components.HealthBar then
+            self.Components.HealthBar.Visible = false
+        end
+    end
 end
 
 function ESP:Add(obj, options)
@@ -374,6 +484,21 @@ function ESP:Add(obj, options)
         Color = box.Color,
         Transparency = 1,
         Visible = self.Enabled and self.Tracers
+    })
+
+    box.Components["HealthBar"] = Drawing.new("Square", {
+        Thickness = 1,
+        Filled = true,
+        Transparency = 1,
+        Visible = self.Enabled and self.Health.Enabled
+    })
+
+    box.Components["HealthBarOutline"] = Drawing.new("Square", {
+        Thickness = 1,
+        Filled = true,
+        Transparency = 1,
+        Color = Color3.new(0, 0, 0),
+        Visible = self.Enabled and self.Health.Enabled
     })
 
     self.Objects[obj] = box
