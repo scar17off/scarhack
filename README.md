@@ -57,6 +57,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 - Godmode
 - Finish
 
+### Specter: Legacy
+- ESP
+- Pickup Bone
+- Fix Fuse
+
 ### Specter
 - ESP
 
