@@ -476,7 +476,27 @@ monitorAllSpiritBoxes()
 -- Sanity Information
 local Sanity = window:CreateCategory("Sanity")
 
+-- Create average sanity label
+local avgSanityLabel = Sanity:CreateLabel("Avg sanity: 100%")
+
 local playerLabels = {}
+
+local function updateAverageSanity()
+    local total = 0
+    local count = 0
+    
+    for _, label in pairs(playerLabels) do
+        local sanityText = label:GetText()
+        local sanityValue = tonumber(string.match(sanityText, "(%d+)"))
+        if sanityValue then
+            total = total + sanityValue
+            count = count + 1
+        end
+    end
+    
+    local average = count > 0 and math.floor(total / count) or 100
+    avgSanityLabel:SetText("Avg sanity: " .. average .. "%")
+end
 
 local function updatePlayerSanity(playerFrame)
     local playerName = playerFrame.Name
@@ -494,7 +514,11 @@ local function updatePlayerSanity(playerFrame)
             -- Monitor for sanity changes
             valLabel:GetPropertyChangedSignal("Text"):Connect(function()
                 playerLabels[playerName]:SetText(playerName .. ": " .. valLabel.Text)
+                updateAverageSanity()
             end)
+            
+            -- Update average after adding new player
+            updateAverageSanity()
         end
     end
 end
@@ -521,5 +545,6 @@ end)
 playersFrame.ChildRemoved:Connect(function(child)
     if playerLabels[child.Name] then
         playerLabels[child.Name]:SetText(child.Name .. ": N/A")
+        updateAverageSanity()
     end
 end)
