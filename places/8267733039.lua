@@ -62,15 +62,9 @@ ESP:CreateToggle({
 })
 
 -- Evidence Information
-local evidenceLabel_1 = Evidences:CreateLabel({
-    text = "N/A"
-})
-local evidenceLabel_2 = Evidences:CreateLabel({
-    text = "N/A"
-})
-local evidenceLabel_3 = Evidences:CreateLabel({
-    text = "N/A"
-})
+local evidenceLabel_1 = Evidences:CreateLabel("N/A")
+local evidenceLabel_2 = Evidences:CreateLabel("N/A")
+local evidenceLabel_3 = Evidences:CreateLabel("N/A")
 
 -- Monitor for new evidence and update labels
 local evidenceFound = {}
