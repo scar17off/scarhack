@@ -201,40 +201,80 @@ workspace.Equipment.ChildAdded:Connect(function(child)
 end)
 
 -- Monitor for motion detection
-local function checkMotion(sensorField)
+local function checkMotion(part)
     if not table.find(evidenceFound, "Motion") then
-        local beep = sensorField:FindFirstChild("Main"):FindFirstChild("Beep")
-        if beep and beep:IsA("Sound") and beep.IsPlaying then
-            table.insert(evidenceFound, "Motion")
-            -- Update first available label
-            if evidenceLabel_1:GetText() == "N/A" then
-                evidenceLabel_1:SetText("Motion")
-            elseif evidenceLabel_2:GetText() == "N/A" then
-                evidenceLabel_2:SetText("Motion")
-            elseif evidenceLabel_3:GetText() == "N/A" then
-                evidenceLabel_3:SetText("Motion")
+        if part:IsA("Part") then
+            -- Check if the color is close to red (allowing for some variation)
+            local r, g, b = part.Color.R, part.Color.G, part.Color.B
+            
+            -- Red detection criteria:
+            -- R value should be high (> 0.8)
+            -- G and B values should be low (< 0.2)
+            if r > 0.8 and g < 0.2 and b < 0.2 then
+                -- Wait a short moment to confirm it's not a temporary change
+                task.wait(0.1)
+                
+                -- Check if still red (to avoid false positives)
+                if part.Parent and part:IsA("Part") then
+                    r, g, b = part.Color.R, part.Color.G, part.Color.B
+                    if r > 0.8 and g < 0.2 and b < 0.2 then
+                        table.insert(evidenceFound, "Motion")
+                        -- Update first available label
+                        if evidenceLabel_1:GetText() == "N/A" then
+                            evidenceLabel_1:SetText("Motion")
+                        elseif evidenceLabel_2:GetText() == "N/A" then
+                            evidenceLabel_2:SetText("Motion")
+                        elseif evidenceLabel_3:GetText() == "N/A" then
+                            evidenceLabel_3:SetText("Motion")
+                        end
+                    end
+                end
             end
         end
     end
 end
 
-workspace.Dynamic.Evidence.MotionGrids.ChildAdded:Connect(function(child)
-    if child.Name == "SensorField" then
-        -- Check initial state
-        checkMotion(child)
-        
-        -- Monitor for beep sound playing
-        local main = child:WaitForChild("Main", 5)
-        if main then
-            local beep = main:WaitForChild("Beep", 5)
-            if beep and beep:IsA("Sound") then
-                beep:GetPropertyChangedSignal("IsPlaying"):Connect(function()
-                    checkMotion(child)
-                end)
-            end
+-- Monitor MotionGrids parts
+local function setupMotionMonitoring()
+    local motionGrids = workspace.Dynamic.Evidence.MotionGrids
+    
+    local function setupPart(part)
+        if part:IsA("Part") then
+            part:GetPropertyChangedSignal("Color"):Connect(function()
+                checkMotion(part)
+            end)
         end
     end
-end)
+    
+    local function setupSensorGrid(sensorGrid)
+        -- Monitor existing parts
+        for _, part in ipairs(sensorGrid:GetDescendants()) do
+            setupPart(part)
+        end
+        
+        -- Monitor for new parts
+        sensorGrid.DescendantAdded:Connect(function(child)
+            setupPart(child)
+        end)
+    end
+    
+    -- Monitor existing SensorGrids
+    for _, model in ipairs(motionGrids:GetChildren()) do
+        if model.Name == "SensorGrid" then
+            setupSensorGrid(model)
+        end
+    end
+    
+    -- Monitor for new SensorGrids
+    motionGrids.ChildAdded:Connect(function(child)
+        if child.Name == "SensorGrid" then
+            setupSensorGrid(child)
+        end
+    end)
+end
+
+-- Start motion monitoring
+setupMotionMonitoring()
 
 -- Monitor for freezing temperatures
 local function checkThermometer(thermometer)
@@ -242,16 +282,30 @@ local function checkThermometer(thermometer)
         local tempLabel = thermometer:FindFirstChild("Temp")
         if tempLabel and tempLabel:FindFirstChild("SurfaceGui") then
             local textLabel = tempLabel.SurfaceGui:FindFirstChild("TextLabel")
-            -- Check for actual negative number, not just dashes
-            if textLabel and string.match(textLabel.Text, "^%-[0-9]") then
-                table.insert(evidenceFound, "Freezing")
-                -- Update first available label
-                if evidenceLabel_1:GetText() == "N/A" then
-                    evidenceLabel_1:SetText("Freezing")
-                elseif evidenceLabel_2:GetText() == "N/A" then
-                    evidenceLabel_2:SetText("Freezing")
-                elseif evidenceLabel_3:GetText() == "N/A" then
-                    evidenceLabel_3:SetText("Freezing")
+            if textLabel then
+                local text = textLabel.Text
+                -- Extract number from text (handles formats like "-2.5°C" or "-2.5 °C")
+                local number = tonumber(string.match(text, "([%-%.%d]+)"))
+                -- Check if it's a valid negative number (not nil and less than 0)
+                if number and number < 0 then
+                    -- Wait a short moment to confirm it's not temporary
+                    task.wait(0.1)
+                    -- Check again to avoid false positives
+                    if thermometer.Parent and textLabel.Parent then
+                        local newText = textLabel.Text
+                        local newNumber = tonumber(string.match(newText, "([%-%.%d]+)"))
+                        if newNumber and newNumber < 0 then
+                            table.insert(evidenceFound, "Freezing")
+                            -- Update first available label
+                            if evidenceLabel_1:GetText() == "N/A" then
+                                evidenceLabel_1:SetText("Freezing")
+                            elseif evidenceLabel_2:GetText() == "N/A" then
+                                evidenceLabel_2:SetText("Freezing")
+                            elseif evidenceLabel_3:GetText() == "N/A" then
+                                evidenceLabel_3:SetText("Freezing")
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -330,17 +384,20 @@ end
 local function checkSpiritBox(spiritBox)
     if not table.find(evidenceFound, "Spirit Box") then
         local main = spiritBox:FindFirstChild("Main")
-        if main and main:FindFirstChild("Template") then
-            local message = main.Template:FindFirstChild("Message")
-            if message and message.Text ~= "" then
-                table.insert(evidenceFound, "Spirit Box")
-                -- Update first available label
-                if evidenceLabel_1:GetText() == "N/A" then
-                    evidenceLabel_1:SetText("Spirit Box")
-                elseif evidenceLabel_2:GetText() == "N/A" then
-                    evidenceLabel_2:SetText("Spirit Box")
-                elseif evidenceLabel_3:GetText() == "N/A" then
-                    evidenceLabel_3:SetText("Spirit Box")
+        if main then
+            -- Check if there are any SurfaceGuis besides Template
+            for _, child in ipairs(main:GetDescendants()) do
+                if child:IsA("SurfaceGui") and child.Name ~= "Template" then
+                    table.insert(evidenceFound, "Spirit Box")
+                    -- Update first available label
+                    if evidenceLabel_1:GetText() == "N/A" then
+                        evidenceLabel_1:SetText("Spirit Box")
+                    elseif evidenceLabel_2:GetText() == "N/A" then
+                        evidenceLabel_2:SetText("Spirit Box")
+                    elseif evidenceLabel_3:GetText() == "N/A" then
+                        evidenceLabel_3:SetText("Spirit Box")
+                    end
+                    break
                 end
             end
         end
@@ -352,15 +409,14 @@ local function setupSpiritBoxMonitoring(spiritBox)
         -- Check initial state
         checkSpiritBox(spiritBox)
         
-        -- Monitor for message changes
+        -- Monitor for new SurfaceGuis
         local main = spiritBox:FindFirstChild("Main")
-        if main and main:FindFirstChild("Template") then
-            local message = main.Template:FindFirstChild("Message")
-            if message then
-                message:GetPropertyChangedSignal("Text"):Connect(function()
+        if main then
+            main.DescendantAdded:Connect(function(child)
+                if child:IsA("SurfaceGui") then
                     checkSpiritBox(spiritBox)
-                end)
-            end
+                end
+            end)
         end
     end
 end
@@ -418,3 +474,54 @@ end
 -- Start monitoring
 monitorAllThermometers()
 monitorAllSpiritBoxes()
+
+-- Players Information
+local Players = window:CreateCategory("Sanity")
+
+local playerLabels = {}
+
+local function updatePlayerSanity(playerFrame)
+    local playerName = playerFrame.Name
+    local entireFrame = playerFrame:FindFirstChild("Entire")
+    if entireFrame then
+        local valLabel = entireFrame:FindFirstChild("Val")
+        if valLabel then
+            -- Create or update player label
+            if not playerLabels[playerName] then
+                playerLabels[playerName] = Sanity:CreateLabel(playerName .. ": " .. valLabel.Text)
+            else
+                playerLabels[playerName]:SetText(playerName .. ": " .. valLabel.Text)
+            end
+            
+            -- Monitor for sanity changes
+            valLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                playerLabels[playerName]:SetText(playerName .. ": " .. valLabel.Text)
+            end)
+        end
+    end
+end
+
+-- Monitor players board
+local playersFrame = workspace.Van.SanityBoard.SurfaceGui.Frame.Players
+
+-- Set up monitoring for existing players
+for _, playerFrame in ipairs(playersFrame:GetChildren()) do
+    if playerFrame:IsA("Frame") then
+        updatePlayerSanity(playerFrame)
+    end
+end
+
+-- Monitor for new players
+playersFrame.ChildAdded:Connect(function(child)
+    if child:IsA("Frame") then
+        task.wait(0.1)
+        updatePlayerSanity(child)
+    end
+end)
+
+-- Clean up removed players
+playersFrame.ChildRemoved:Connect(function(child)
+    if playerLabels[child.Name] then
+        playerLabels[child.Name]:SetText(child.Name .. ": N/A")
+    end
+end)
