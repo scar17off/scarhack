@@ -68,23 +68,14 @@ function ESP:IsTeamMate(p)
 end
 
 function ESP:GetColor(obj)
-    local ov = self.Overrides.GetColor
-    if ov then
-        return ov(obj)
+	local ov = self.Overrides.GetColor
+	if ov then
+		return ov(obj)
     end
-
-    -- First check if there's a custom color set for this box
-    local box = self:GetBox(obj)
-    if box and box.Color then
-        return box.Color
-    end
-    
-    -- Then check for team color if enabled
     local p = self:GetPlrFromChar(obj)
-    if p and self.TeamColor and p.Team and p.Team.TeamColor then
+    if p and self.TeamColor and p.Team then
         return p.Team.TeamColor.Color
     end
-
     return self.DefaultColor
 end
 
@@ -173,16 +164,6 @@ end
 function boxBase:Update()
     if not self.PrimaryPart then
         return self:Remove()
-    end
-
-    -- Check if this specific type of ESP is enabled
-    if self.IsEnabled and not ESP[self.IsEnabled] then
-        for _, v in pairs(self.Components) do
-            if typeof(v) ~= "Instance" then
-                v.Visible = false
-            end
-        end
-        return
     end
 
     -- If ESP is disabled, hide everything
@@ -456,7 +437,7 @@ function ESP:Add(obj, options)
     local box = setmetatable({
         Name = options.Name or obj.Name,
         Type = "Box",
-        Color = options.Color or self.DefaultColor,
+        Color = options.Color or self:GetColor(obj),
         Size = options.Size or self.BoxSize,
         Object = obj,
         Player = options.Player or plrs:GetPlayerFromCharacter(obj),
@@ -481,30 +462,33 @@ function ESP:Add(obj, options)
     for _, line in pairs({"TopLine", "LeftLine", "RightLine", "BottomLine"}) do
         box.Components[line].Visible = false
         box.Components[line].Thickness = self.Thickness
-        box.Components[line].Color = box.Color or self.DefaultColor
+        box.Components[line].Color = box.Color
         box.Components[line].Transparency = 1
     end
 
-    box.Components["Name"] = Drawing.new("Text")
-    box.Components["Name"].Text = box.Name
-    box.Components["Name"].Color = box.Color or self.DefaultColor
-    box.Components["Name"].Center = true
-    box.Components["Name"].Outline = true
-    box.Components["Name"].Size = 25
-    box.Components["Name"].Visible = self.Enabled and self.Names
+    box.Components["Name"] = Drawing.new("Text", {
+        Text = box.Name,
+        Color = box.Color,
+        Center = true,
+        Outline = true,
+        Size = 19,
+        Visible = self.Enabled and self.Names
+    })
 
-    box.Components["Distance"] = Drawing.new("Text")
-    box.Components["Distance"].Color = box.Color or self.DefaultColor
-    box.Components["Distance"].Center = true
-    box.Components["Distance"].Outline = true
-    box.Components["Distance"].Size = 25
-    box.Components["Distance"].Visible = self.Enabled and self.Names
+    box.Components["Distance"] = Drawing.new("Text", {
+        Color = box.Color,
+        Center = true,
+        Outline = true,
+        Size = 19,
+        Visible = self.Enabled and self.Names
+    })
     
-    box.Components["Tracer"] = Drawing.new("Line")
-    box.Components["Tracer"].Thickness = ESP.Thickness
-    box.Components["Tracer"].Color = box.Color or self.DefaultColor
-    box.Components["Tracer"].Transparency = 1
-    box.Components["Tracer"].Visible = self.Enabled and self.Tracers
+    box.Components["Tracer"] = Drawing.new("Line", {
+        Thickness = ESP.Thickness,
+        Color = box.Color,
+        Transparency = 1,
+        Visible = self.Enabled and self.Tracers
+    })
 
     box.Components["HealthBar"] = Drawing.new("Square", {
         Thickness = 1,
@@ -557,8 +541,7 @@ local function CharAdded(char)
                 ESP:Add(char, {
                     Name = p.Name,
                     Player = p,
-                    PrimaryPart = c,
-                    Color = ESP.DefaultColor
+                    PrimaryPart = c
                 })
             end
         end)
@@ -566,8 +549,7 @@ local function CharAdded(char)
         ESP:Add(char, {
             Name = p.Name,
             Player = p,
-            PrimaryPart = char.HumanoidRootPart,
-            Color = ESP.DefaultColor
+            PrimaryPart = char.HumanoidRootPart
         })
     end
 end
