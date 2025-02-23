@@ -478,6 +478,10 @@ function UI.CreateWindow()
                 LabelInstance.Text = newText
             end
             
+            function Label:GetText()
+                return LabelInstance.Text
+            end
+            
             return Label
         end
         
