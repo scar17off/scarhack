@@ -473,8 +473,8 @@ end
 monitorAllThermometers()
 monitorAllSpiritBoxes()
 
--- Players Information
-local Players = window:CreateCategory("Sanity")
+-- Sanity Information
+local Sanity = window:CreateCategory("Sanity")
 
 local playerLabels = {}
 
