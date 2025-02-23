@@ -68,15 +68,24 @@ function ESP:IsTeamMate(p)
 end
 
 function ESP:GetColor(obj)
-	local ov = self.Overrides.GetColor
-	if ov then
-		return ov(obj)
+    local ov = self.Overrides.GetColor
+    if ov then
+        return ov(obj)
     end
+
+    -- First check if there's a custom color set for this box
+    local box = self:GetBox(obj)
+    if box and box.Color then
+        return box.Color
+    end
+    
+    -- Then check for team color if enabled
     local p = self:GetPlrFromChar(obj)
-    if p and self.TeamColor and p.Team then
+    if p and self.TeamColor and p.Team and p.Team.TeamColor then
         return p.Team.TeamColor.Color
     end
-    return self.DefaultColor
+
+    return self.Color
 end
 
 function ESP:GetPlrFromChar(char)
