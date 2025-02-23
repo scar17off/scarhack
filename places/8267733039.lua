@@ -201,8 +201,10 @@ workspace.Equipment.ChildAdded:Connect(function(child)
 end)
 
 -- Monitor for motion detection
+local motionDetected = false -- Flag to prevent multiple detections
+
 local function checkMotion(part)
-    if not table.find(evidenceFound, "Motion") then
+    if not motionDetected and not table.find(evidenceFound, "Motion") then
         if part:IsA("Part") then
             -- Check if the color is close to red (allowing for some variation)
             local r, g, b = part.Color.R, part.Color.G, part.Color.B
@@ -212,12 +214,13 @@ local function checkMotion(part)
             -- G and B values should be low (< 0.2)
             if r > 0.8 and g < 0.2 and b < 0.2 then
                 -- Wait a short moment to confirm it's not a temporary change
+                motionDetected = true -- Set flag to prevent multiple detections during wait
                 task.wait(0.1)
                 
                 -- Check if still red (to avoid false positives)
                 if part.Parent and part:IsA("Part") then
                     r, g, b = part.Color.R, part.Color.G, part.Color.B
-                    if r > 0.8 and g < 0.2 and b < 0.2 then
+                    if r > 0.8 and g < 0.2 and b < 0.2 and not table.find(evidenceFound, "Motion") then
                         table.insert(evidenceFound, "Motion")
                         -- Update first available label
                         if evidenceLabel_1:GetText() == "N/A" then
@@ -229,6 +232,8 @@ local function checkMotion(part)
                         end
                     end
                 end
+                task.wait(0.1)
+                motionDetected = false -- Reset flag after detection attempt
             end
         end
     end
@@ -475,8 +480,6 @@ monitorAllSpiritBoxes()
 
 -- Sanity Information
 local Sanity = window:CreateCategory("Sanity")
-
--- Create average sanity label
 local avgSanityLabel = Sanity:CreateLabel("Avg sanity: 100%")
 
 local playerLabels = {}
@@ -487,7 +490,8 @@ local function updateAverageSanity()
     
     for _, label in pairs(playerLabels) do
         local sanityText = label:GetText()
-        local sanityValue = tonumber(string.match(sanityText, "(%d+)"))
+        -- Extract just the number before the % sign
+        local sanityValue = tonumber(string.match(sanityText, ": (%d+)%%"))
         if sanityValue then
             total = total + sanityValue
             count = count + 1
@@ -517,7 +521,6 @@ local function updatePlayerSanity(playerFrame)
                 updateAverageSanity()
             end)
             
-            -- Update average after adding new player
             updateAverageSanity()
         end
     end
