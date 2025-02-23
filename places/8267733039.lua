@@ -27,12 +27,26 @@ ESPLibrary:AddObjectListener(workspace.Dynamic.Evidence.Orbs, {
     IsEnabled = "Orb"
 })
 
+ESPLibrary:AddObjectListener(workspace.ServerNPCs, {
+    CustomName = "Ghost",
+    Color = Color3.fromRGB(255, 0, 0),
+    IsEnabled = "Ghost"
+})
+
 -- ESP Toggles
 ESP:CreateToggle({
     text = "ESP",
     default = false,
     callback = function(value)
         ESPLibrary:Toggle(value)
+    end
+})
+
+ESP:CreateToggle({
+    text = "Ghost",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Ghost = value
     end
 })
 
@@ -174,18 +188,16 @@ end)
 -- Monitor for motion detection
 local function checkMotion(sensorField)
     if not table.find(evidenceFound, "Motion") then
-        for _, part in ipairs(sensorField:GetChildren()) do
-            if part:IsA("Part") and part.Color ~= Color3.fromRGB(255, 255, 255) then
-                table.insert(evidenceFound, "Motion")
-                -- Update first available label
-                if evidenceLabel_1:GetText() == "N/A" then
-                    evidenceLabel_1:SetText("Motion")
-                elseif evidenceLabel_2:GetText() == "N/A" then
-                    evidenceLabel_2:SetText("Motion")
-                elseif evidenceLabel_3:GetText() == "N/A" then
-                    evidenceLabel_3:SetText("Motion")
-                end
-                break
+        local beep = sensorField:FindFirstChild("Main"):FindFirstChild("Beep")
+        if beep and beep:IsA("Sound") and beep.IsPlaying then
+            table.insert(evidenceFound, "Motion")
+            -- Update first available label
+            if evidenceLabel_1:GetText() == "N/A" then
+                evidenceLabel_1:SetText("Motion")
+            elseif evidenceLabel_2:GetText() == "N/A" then
+                evidenceLabel_2:SetText("Motion")
+            elseif evidenceLabel_3:GetText() == "N/A" then
+                evidenceLabel_3:SetText("Motion")
             end
         end
     end
@@ -196,14 +208,16 @@ workspace.Dynamic.Evidence.MotionGrids.ChildAdded:Connect(function(child)
         -- Check initial state
         checkMotion(child)
         
-        -- Monitor for color changes
-        child.DescendantAdded:Connect(function(descendant)
-            if descendant:IsA("Part") then
-                descendant:GetPropertyChangedSignal("Color"):Connect(function()
+        -- Monitor for beep sound playing
+        local main = child:WaitForChild("Main", 5)
+        if main then
+            local beep = main:WaitForChild("Beep", 5)
+            if beep and beep:IsA("Sound") then
+                beep:GetPropertyChangedSignal("IsPlaying"):Connect(function()
                     checkMotion(child)
                 end)
             end
-        end)
+        end
     end
 end)
 
