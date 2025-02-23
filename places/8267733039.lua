@@ -284,6 +284,41 @@ setupMotionMonitoring()
 -- Monitor for freezing temperatures
 local thermometerConnections = {} -- Store connections for cleanup
 
+local function checkThermometer(thermometer)
+    if not table.find(evidenceFound, "Freezing") then
+        local tempLabel = thermometer:FindFirstChild("Temp")
+        if tempLabel and tempLabel:FindFirstChild("SurfaceGui") then
+            local textLabel = tempLabel.SurfaceGui:FindFirstChild("TextLabel")
+            if textLabel then
+                local text = textLabel.Text
+                -- Extract number from text (handles formats like "-2.5°C" or "-2.5 °C")
+                local number = tonumber(string.match(text, "([%-%.%d]+)"))
+                -- Check if it's a valid negative number (not nil and less than 0)
+                if number and number < 0 then
+                    -- Wait a short moment to confirm it's not temporary
+                    task.wait(0.1)
+                    -- Check again to avoid false positives
+                    if thermometer.Parent and textLabel.Parent then
+                        local newText = textLabel.Text
+                        local newNumber = tonumber(string.match(newText, "([%-%.%d]+)"))
+                        if newNumber and newNumber < 0 then
+                            table.insert(evidenceFound, "Freezing")
+                            -- Update first available label
+                            if evidenceLabel_1:GetText() == "N/A" then
+                                evidenceLabel_1:SetText("Freezing")
+                            elseif evidenceLabel_2:GetText() == "N/A" then
+                                evidenceLabel_2:SetText("Freezing")
+                            elseif evidenceLabel_3:GetText() == "N/A" then
+                                evidenceLabel_3:SetText("Freezing")
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 local function disconnectThermometer(thermometer)
     if thermometerConnections[thermometer] then
         for _, connection in ipairs(thermometerConnections[thermometer]) do
