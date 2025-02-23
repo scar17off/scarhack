@@ -74,7 +74,7 @@ workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
         if not table.find(evidenceFound, "EMF 5") then
             table.insert(evidenceFound, "EMF 5")
             -- Update first available label
-            if evidenceLabel_1.Text == "N/A" then
+            if evidenceLabel_1.GetText() == "N/A" then
                 evidenceLabel_1:SetText("EMF 5")
             elseif evidenceLabel_2.Text == "N/A" then
                 evidenceLabel_2:SetText("EMF 5")
@@ -86,7 +86,7 @@ workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
         if not table.find(evidenceFound, "Fingerprint") then
             table.insert(evidenceFound, "Fingerprint")
             -- Update first available label
-            if evidenceLabel_1.Text == "N/A" then
+            if evidenceLabel_1.GetText() == "N/A" then
                 evidenceLabel_1:SetText("Fingerprints")
             elseif evidenceLabel_2.Text == "N/A" then
                 evidenceLabel_2:SetText("Fingerprints")
@@ -98,7 +98,7 @@ workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
         if not table.find(evidenceFound, "Orb") then
             table.insert(evidenceFound, "Orb")
             -- Update first available label
-            if evidenceLabel_1.Text == "N/A" then
+            if evidenceLabel_1.GetText() == "N/A" then
                 evidenceLabel_1:SetText("Orb")
             elseif evidenceLabel_2.Text == "N/A" then
                 evidenceLabel_2:SetText("Orb")
@@ -116,7 +116,7 @@ local function checkBookWriting()
     if not table.find(evidenceFound, "Book Writing") then
         table.insert(evidenceFound, "Book Writing")
         -- Update first available label
-        if evidenceLabel_1.Text == "N/A" then
+        if evidenceLabel_1.GetText() == "N/A" then
             evidenceLabel_1:SetText("Book Writing")
         elseif evidenceLabel_2.Text == "N/A" then
             evidenceLabel_2:SetText("Book Writing")
