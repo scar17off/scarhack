@@ -456,7 +456,7 @@ function ESP:Add(obj, options)
     local box = setmetatable({
         Name = options.Name or obj.Name,
         Type = "Box",
-        Color = options.Color,
+        Color = options.Color or self.DefaultColor,
         Size = options.Size or self.BoxSize,
         Object = obj,
         Player = options.Player or plrs:GetPlayerFromCharacter(obj),
@@ -481,33 +481,30 @@ function ESP:Add(obj, options)
     for _, line in pairs({"TopLine", "LeftLine", "RightLine", "BottomLine"}) do
         box.Components[line].Visible = false
         box.Components[line].Thickness = self.Thickness
-        box.Components[line].Color = box.Color
+        box.Components[line].Color = box.Color or self.DefaultColor
         box.Components[line].Transparency = 1
     end
 
-    box.Components["Name"] = Drawing.new("Text", {
-        Text = box.Name,
-        Color = box.Color,
-        Center = true,
-        Outline = true,
-        Size = 25,
-        Visible = self.Enabled and self.Names
-    })
+    box.Components["Name"] = Drawing.new("Text")
+    box.Components["Name"].Text = box.Name
+    box.Components["Name"].Color = box.Color or self.DefaultColor
+    box.Components["Name"].Center = true
+    box.Components["Name"].Outline = true
+    box.Components["Name"].Size = 25
+    box.Components["Name"].Visible = self.Enabled and self.Names
 
-    box.Components["Distance"] = Drawing.new("Text", {
-        Color = box.Color,
-        Center = true,
-        Outline = true,
-        Size = 25,
-        Visible = self.Enabled and self.Names
-    })
+    box.Components["Distance"] = Drawing.new("Text")
+    box.Components["Distance"].Color = box.Color or self.DefaultColor
+    box.Components["Distance"].Center = true
+    box.Components["Distance"].Outline = true
+    box.Components["Distance"].Size = 25
+    box.Components["Distance"].Visible = self.Enabled and self.Names
     
-    box.Components["Tracer"] = Drawing.new("Line", {
-        Thickness = ESP.Thickness,
-        Color = box.Color,
-        Transparency = 1,
-        Visible = self.Enabled and self.Tracers
-    })
+    box.Components["Tracer"] = Drawing.new("Line")
+    box.Components["Tracer"].Thickness = ESP.Thickness
+    box.Components["Tracer"].Color = box.Color or self.DefaultColor
+    box.Components["Tracer"].Transparency = 1
+    box.Components["Tracer"].Visible = self.Enabled and self.Tracers
 
     box.Components["HealthBar"] = Drawing.new("Square", {
         Thickness = 1,
