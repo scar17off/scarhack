@@ -166,8 +166,13 @@ function boxBase:Update()
         return self:Remove()
     end
 
-    -- If ESP is disabled, hide everything
-    if not ESP.Enabled then
+    -- Check if ESP is enabled and if this specific object should be visible
+    local isEnabled = true
+    if type(self.IsEnabled) == "function" then
+        isEnabled = self.IsEnabled(self.Object)
+    end
+
+    if not ESP.Enabled or not isEnabled then
         for _, v in pairs(self.Components) do
             if typeof(v) ~= "Instance" then
                 v.Visible = false

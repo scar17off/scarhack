@@ -5,24 +5,35 @@ local window = UI.CreateWindow()
 -- Categories
 local ESP = window:CreateCategory("ESP")
 
+ESPLibrary.Players = false
+
 ESPLibrary:AddObjectListener(workspace.Map.Ingame.Map, {
     Name = "Generator",
     CustomName = "Generators",
     Color = Color3.fromRGB(255, 255, 0),
-    IsEnabled = "Generator"
+    IsEnabled = function(obj)
+        return ESPLibrary.Generators
+    end
 })
+ESPLibrary.Generators = false
 
 ESPLibrary:AddObjectListener(workspace.Players, {
     CustomName = function(obj) return obj.Name end,
     Color = Color3.fromRGB(255, 0, 0),
-    IsEnabled = "Killer"
+    IsEnabled = function(obj)
+        return ESPLibrary.Killers
+    end,
 })
+ESPLibrary.Killers = false
 
 ESPLibrary:AddObjectListener(workspace.Players, {
     CustomName = function(obj) return obj.Name end,
     Color = Color3.fromRGB(0, 255, 0),
-    IsEnabled = "Survivor"
+    IsEnabled = function(obj)
+        return ESPLibrary.Survivors
+    end,
 })
+ESPLibrary.Survivors = false
 
 ESP:CreateToggle({
     text = "ESP",
