@@ -213,7 +213,8 @@ local function checkThermometer(thermometer)
         local tempLabel = thermometer:FindFirstChild("Temp")
         if tempLabel and tempLabel:FindFirstChild("SurfaceGui") then
             local textLabel = tempLabel.SurfaceGui:FindFirstChild("TextLabel")
-            if textLabel and string.match(textLabel.Text, "^%-") then
+            -- Check for actual negative number, not just dashes
+            if textLabel and string.match(textLabel.Text, "^%-[0-9]") then
                 table.insert(evidenceFound, "Freezing")
                 -- Update first available label
                 if evidenceLabel_1:GetText() == "N/A" then
@@ -246,33 +247,54 @@ local function setupThermometerMonitoring(thermometer)
     end
 end
 
--- Monitor Equipment folder
-workspace.Equipment.ChildAdded:Connect(function(child)
-    if child.Name == "Thermometer" then
-        setupThermometerMonitoring(child)
-    end
-end)
-
--- Monitor Character's EquipmentModel
-if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
-    workspace.Character.EquipmentModel.ChildAdded:Connect(function(child)
+-- Monitor Equipment folder and all players
+local function monitorAllThermometers()
+    -- Check workspace Equipment
+    workspace.Equipment.ChildAdded:Connect(function(child)
         if child.Name == "Thermometer" then
             setupThermometerMonitoring(child)
         end
     end)
-end
-
--- Check for existing thermometers
-local equipmentThermometer = workspace.Equipment:FindFirstChild("Thermometer")
-if equipmentThermometer then
-    setupThermometerMonitoring(equipmentThermometer)
-end
-
-if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
-    local characterThermometer = workspace.Character.EquipmentModel:FindFirstChild("Thermometer")
-    if characterThermometer then
-        setupThermometerMonitoring(characterThermometer)
+    
+    -- Check existing thermometer in workspace
+    local equipmentThermometer = workspace.Equipment:FindFirstChild("Thermometer")
+    if equipmentThermometer then
+        setupThermometerMonitoring(equipmentThermometer)
     end
+    
+    -- Monitor all EquipmentModels in workspace
+    local function checkEquipmentModel(model)
+        if model then
+            -- Monitor for new thermometers
+            model.ChildAdded:Connect(function(child)
+                if child.Name == "Thermometer" then
+                    setupThermometerMonitoring(child)
+                end
+            end)
+            
+            -- Check existing thermometer
+            local thermometer = model:FindFirstChild("Thermometer")
+            if thermometer then
+                setupThermometerMonitoring(thermometer)
+            end
+        end
+    end
+    
+    -- Check all existing EquipmentModels
+    for _, obj in ipairs(workspace:GetChildren()) do
+        local equipModel = obj:FindFirstChild("EquipmentModel")
+        if equipModel then
+            checkEquipmentModel(equipModel)
+        end
+    end
+    
+    -- Monitor for new EquipmentModels
+    workspace.ChildAdded:Connect(function(child)
+        local equipModel = child:FindFirstChild("EquipmentModel")
+        if equipModel then
+            checkEquipmentModel(equipModel)
+        end
+    end)
 end
 
 -- Monitor for Spirit Box responses
@@ -314,31 +336,56 @@ local function setupSpiritBoxMonitoring(spiritBox)
     end
 end
 
--- Monitor Equipment folder
-workspace.Equipment.ChildAdded:Connect(function(child)
-    if child.Name == "Spirit Box" then
-        setupSpiritBoxMonitoring(child)
-    end
-end)
-
--- Monitor Character's EquipmentModel
-if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
-    workspace.Character.EquipmentModel.ChildAdded:Connect(function(child)
+-- Monitor Equipment folder and all players for Spirit Boxes
+local function monitorAllSpiritBoxes()
+    -- Check workspace Equipment
+    workspace.Equipment.ChildAdded:Connect(function(child)
         if child.Name == "Spirit Box" then
             setupSpiritBoxMonitoring(child)
         end
     end)
-end
-
--- Check for existing Spirit Boxes
-local equipmentSpiritBox = workspace.Equipment:FindFirstChild("Spirit Box")
-if equipmentSpiritBox then
-    setupSpiritBoxMonitoring(equipmentSpiritBox)
-end
-
-if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
-    local characterSpiritBox = workspace.Character.EquipmentModel:FindFirstChild("SpiritBox")
-    if characterSpiritBox then
-        setupSpiritBoxMonitoring(characterSpiritBox)
+    
+    -- Check existing Spirit Box in workspace
+    local equipmentSpiritBox = workspace.Equipment:FindFirstChild("Spirit Box")
+    if equipmentSpiritBox then
+        setupSpiritBoxMonitoring(equipmentSpiritBox)
     end
+    
+    -- Monitor all EquipmentModels in workspace
+    local function checkEquipmentModel(model)
+        if model then
+            -- Monitor for new Spirit Boxes
+            model.ChildAdded:Connect(function(child)
+                if child.Name == "Spirit Box" then
+                    setupSpiritBoxMonitoring(child)
+                end
+            end)
+            
+            -- Check existing Spirit Box
+            local spiritBox = model:FindFirstChild("Spirit Box")
+            if spiritBox then
+                setupSpiritBoxMonitoring(spiritBox)
+            end
+        end
+    end
+    
+    -- Check all existing EquipmentModels
+    for _, obj in ipairs(workspace:GetChildren()) do
+        local equipModel = obj:FindFirstChild("EquipmentModel")
+        if equipModel then
+            checkEquipmentModel(equipModel)
+        end
+    end
+    
+    -- Monitor for new EquipmentModels
+    workspace.ChildAdded:Connect(function(child)
+        local equipModel = child:FindFirstChild("EquipmentModel")
+        if equipModel then
+            checkEquipmentModel(equipModel)
+        end
+    end)
 end
+
+-- Start monitoring
+monitorAllThermometers()
+monitorAllSpiritBoxes()
