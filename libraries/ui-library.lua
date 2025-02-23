@@ -474,6 +474,10 @@ function UI.CreateWindow()
             LabelInstance.TextXAlignment = Enum.TextXAlignment.Center
             LabelInstance.BorderSizePixel = 0
             
+            function Label:SetText(newText)
+                LabelInstance.Text = newText
+            end
+            
             return Label
         end
         
