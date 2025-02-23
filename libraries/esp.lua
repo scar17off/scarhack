@@ -84,18 +84,23 @@ end
 
 function ESP:Toggle(bool)
     self.Enabled = bool
-    -- Simply toggle visibility of all components
+    -- Toggle visibility of all components
     for i,v in pairs(self.Objects) do
         if v.Type == "Box" then
             for i2,v2 in pairs(v.Components) do
-                if i2 == "Quad" then
-                    v2.Visible = bool and self.Boxes
-                elseif i2 == "Name" then
-                    v2.Visible = bool and self.Names
-                elseif i2 == "Distance" then
-                    v2.Visible = bool and self.Distance
-                elseif i2 == "Tracer" then
-                    v2.Visible = bool and self.Tracers
+                if typeof(v2) ~= "Instance" then  -- Skip Highlight instance
+                    v2.Visible = false  -- First set all to false
+                    if bool then  -- Then selectively enable based on settings
+                        if i2 == "Quad" then
+                            v2.Visible = self.Boxes
+                        elseif i2 == "Name" then
+                            v2.Visible = self.Names
+                        elseif i2 == "Distance" then
+                            v2.Visible = self.Distance
+                        elseif i2 == "Tracer" then
+                            v2.Visible = self.Tracers
+                        end
+                    end
                 end
             end
             -- Handle highlight separately
@@ -227,8 +232,8 @@ function boxBase:Update()
         local BottomLeft, Vis3 = WorldToViewportPoint(cam, locs.BottomLeft.p)
         local BottomRight, Vis4 = WorldToViewportPoint(cam, locs.BottomRight.p)
 
-        -- Check if any point is behind the camera (Z < 0)
-        if TopLeft.Z < 0 or TopRight.Z < 0 or BottomLeft.Z < 0 or BottomRight.Z < 0 then
+        -- If any point is behind the camera or not visible, hide the box
+        if not (Vis1 and Vis2 and Vis3 and Vis4) then
             self.Components.Quad.Visible = false
         else
             -- Check if points are within screen bounds
@@ -246,7 +251,7 @@ function boxBase:Update()
                 end
             end
 
-            if success and (Vis1 or Vis2 or Vis3 or Vis4) then
+            if success then
                 self.Components.Quad.Visible = true
                 self.Components.Quad.PointA = Vector2.new(TopRight.X, TopRight.Y)
                 self.Components.Quad.PointB = Vector2.new(TopLeft.X, TopLeft.Y)
