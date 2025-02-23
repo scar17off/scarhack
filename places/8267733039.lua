@@ -74,11 +74,11 @@ workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
         if not table.find(evidenceFound, "EMF 5") then
             table.insert(evidenceFound, "EMF 5")
             -- Update first available label
-            if evidenceLabel_1.GetText() == "N/A" then
+            if evidenceLabel_1:GetText() == "N/A" then
                 evidenceLabel_1:SetText("EMF 5")
-            elseif evidenceLabel_2.Text == "N/A" then
+            elseif evidenceLabel_2:GetText() == "N/A" then
                 evidenceLabel_2:SetText("EMF 5")
-            elseif evidenceLabel_3.Text == "N/A" then
+            elseif evidenceLabel_3:GetText() == "N/A" then
                 evidenceLabel_3:SetText("EMF 5")
             end
         end
@@ -86,11 +86,11 @@ workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
         if not table.find(evidenceFound, "Fingerprint") then
             table.insert(evidenceFound, "Fingerprint")
             -- Update first available label
-            if evidenceLabel_1.GetText() == "N/A" then
+            if evidenceLabel_1:GetText() == "N/A" then
                 evidenceLabel_1:SetText("Fingerprints")
-            elseif evidenceLabel_2.Text == "N/A" then
+            elseif evidenceLabel_2:GetText() == "N/A" then
                 evidenceLabel_2:SetText("Fingerprints")
-            elseif evidenceLabel_3.Text == "N/A" then
+            elseif evidenceLabel_3:GetText() == "N/A" then
                 evidenceLabel_3:SetText("Fingerprints")
             end
         end
@@ -98,38 +98,70 @@ workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
         if not table.find(evidenceFound, "Orb") then
             table.insert(evidenceFound, "Orb")
             -- Update first available label
-            if evidenceLabel_1.GetText() == "N/A" then
+            if evidenceLabel_1:GetText() == "N/A" then
                 evidenceLabel_1:SetText("Orb")
-            elseif evidenceLabel_2.Text == "N/A" then
+            elseif evidenceLabel_2:GetText() == "N/A" then
                 evidenceLabel_2:SetText("Orb")
-            elseif evidenceLabel_3.Text == "N/A" then
+            elseif evidenceLabel_3:GetText() == "N/A" then
                 evidenceLabel_3:SetText("Orb")
             end
         end
     end
 end)
 
--- Monitor for book writing sounds
-local bookSounds = SoundService.Sounds.BookWrite
-
+-- Monitor for book writing
 local function checkBookWriting()
     if not table.find(evidenceFound, "Book Writing") then
-        table.insert(evidenceFound, "Book Writing")
-        -- Update first available label
-        if evidenceLabel_1.GetText() == "N/A" then
-            evidenceLabel_1:SetText("Book Writing")
-        elseif evidenceLabel_2.Text == "N/A" then
-            evidenceLabel_2:SetText("Book Writing")
-        elseif evidenceLabel_3.Text == "N/A" then
-            evidenceLabel_3:SetText("Book Writing")
+        local book = workspace.Equipment:FindFirstChild("Book")
+        if book then
+            local leftPage = book:FindFirstChild("LeftPage")
+            local rightPage = book:FindFirstChild("RightPage")
+            
+            -- Check if either page has a Decal
+            local hasWriting = false
+            if leftPage and #leftPage:GetChildren() > 0 then
+                for _, child in pairs(leftPage:GetChildren()) do
+                    if child:IsA("Decal") then
+                        hasWriting = true
+                        break
+                    end
+                end
+            end
+            if not hasWriting and rightPage and #rightPage:GetChildren() > 0 then
+                for _, child in pairs(rightPage:GetChildren()) do
+                    if child:IsA("Decal") then
+                        hasWriting = true
+                        break
+                    end
+                end
+            end
+
+            if hasWriting then
+                table.insert(evidenceFound, "Book Writing")
+                -- Update first available label
+                if evidenceLabel_1:GetText() == "N/A" then
+                    evidenceLabel_1:SetText("Book Writing")
+                elseif evidenceLabel_2:GetText() == "N/A" then
+                    evidenceLabel_2:SetText("Book Writing")
+                elseif evidenceLabel_3:GetText() == "N/A" then
+                    evidenceLabel_3:SetText("Book Writing")
+                end
+            end
         end
     end
 end
 
-for _, sound in ipairs(bookSounds:GetChildren()) do
-    sound:GetPropertyChangedSignal("IsPlaying"):Connect(function()
-        if sound.IsPlaying then
-            checkBookWriting()
-        end
-    end)
-end
+-- Set up book monitoring
+workspace.Equipment.ChildAdded:Connect(function(child)
+    if child.Name == "Book" then
+        task.wait(1)
+        checkBookWriting()
+        
+        -- Monitor the pages for changes
+        child.DescendantAdded:Connect(function(descendant)
+            if descendant:IsA("Decal") then
+                checkBookWriting()
+            end
+        end)
+    end
+end)
