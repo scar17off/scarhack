@@ -33,6 +33,13 @@ ESPLibrary:AddObjectListener(workspace.ServerNPCs, {
     IsEnabled = "Ghost"
 })
 
+ESPLibrary:AddObjectListener(workspace.Map, {
+    Name = "Bone",
+    CustomName = "Bone",
+    Color = Color3.fromRGB(255, 192, 203),
+    IsEnabled = "Bone"
+})
+
 -- ESP Toggles
 ESP:CreateToggle({
     text = "ESP",
@@ -71,6 +78,14 @@ ESP:CreateToggle({
     default = false,
     callback = function(value)
         ESPLibrary.Orb = value
+    end
+})
+
+ESP:CreateToggle({
+    text = "Bone",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Bone = value
     end
 })
 
