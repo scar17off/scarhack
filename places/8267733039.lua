@@ -86,8 +86,8 @@ workspace.Dynamic.Evidence.EMF.ChildAdded:Connect(function(obj)
 end)
 
 workspace.Dynamic.Evidence.Fingerprints.ChildAdded:Connect(function(obj)
-    if not table.find(evidenceFound, "Fingerprint") then
-        table.insert(evidenceFound, "Fingerprint")
+    if not table.find(evidenceFound, "Fingerprints") then
+        table.insert(evidenceFound, "Fingerprints")
         -- Update first available label
         if evidenceLabel_1:GetText() == "N/A" then
             evidenceLabel_1:SetText("Fingerprints")
@@ -165,6 +165,42 @@ workspace.Equipment.ChildAdded:Connect(function(child)
         child.DescendantAdded:Connect(function(descendant)
             if descendant:IsA("Decal") then
                 checkBookWriting()
+            end
+        end)
+    end
+end)
+
+-- Monitor for motion detection
+local function checkMotion(sensorField)
+    if not table.find(evidenceFound, "Motion") then
+        for _, part in ipairs(sensorField:GetChildren()) do
+            if part:IsA("Part") and part.Color ~= Color3.fromRGB(255, 255, 255) then
+                table.insert(evidenceFound, "Motion")
+                -- Update first available label
+                if evidenceLabel_1:GetText() == "N/A" then
+                    evidenceLabel_1:SetText("Motion")
+                elseif evidenceLabel_2:GetText() == "N/A" then
+                    evidenceLabel_2:SetText("Motion")
+                elseif evidenceLabel_3:GetText() == "N/A" then
+                    evidenceLabel_3:SetText("Motion")
+                end
+                break
+            end
+        end
+    end
+end
+
+workspace.Dynamic.Evidence.MotionGrids.ChildAdded:Connect(function(child)
+    if child.Name == "SensorField" then
+        -- Check initial state
+        checkMotion(child)
+        
+        -- Monitor for color changes
+        child.DescendantAdded:Connect(function(descendant)
+            if descendant:IsA("Part") then
+                descendant:GetPropertyChangedSignal("Color"):Connect(function()
+                    checkMotion(child)
+                end)
             end
         end)
     end
