@@ -70,7 +70,7 @@ local evidenceLabel_3 = Evidences:CreateLabel("N/A")
 local evidenceFound = {}
 
 workspace.Dynamic.Evidence.EMF.ChildAdded:Connect(function(obj)
-    if obj.Value == 5 then
+    if obj.Name == "EMF5" then
         if not table.find(evidenceFound, "EMF 5") then
             table.insert(evidenceFound, "EMF 5")
             -- Update first available label
