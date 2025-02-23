@@ -274,3 +274,71 @@ if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild(
         setupThermometerMonitoring(characterThermometer)
     end
 end
+
+-- Monitor for Spirit Box responses
+local function checkSpiritBox(spiritBox)
+    if not table.find(evidenceFound, "Spirit Box") then
+        local main = spiritBox:FindFirstChild("Main")
+        if main and main:FindFirstChild("Template") then
+            local message = main.Template:FindFirstChild("Message")
+            if message and message.Text ~= "" then
+                table.insert(evidenceFound, "Spirit Box")
+                -- Update first available label
+                if evidenceLabel_1:GetText() == "N/A" then
+                    evidenceLabel_1:SetText("Spirit Box")
+                elseif evidenceLabel_2:GetText() == "N/A" then
+                    evidenceLabel_2:SetText("Spirit Box")
+                elseif evidenceLabel_3:GetText() == "N/A" then
+                    evidenceLabel_3:SetText("Spirit Box")
+                end
+            end
+        end
+    end
+end
+
+local function setupSpiritBoxMonitoring(spiritBox)
+    if spiritBox then
+        -- Check initial state
+        checkSpiritBox(spiritBox)
+        
+        -- Monitor for message changes
+        local main = spiritBox:FindFirstChild("Main")
+        if main and main:FindFirstChild("Template") then
+            local message = main.Template:FindFirstChild("Message")
+            if message then
+                message:GetPropertyChangedSignal("Text"):Connect(function()
+                    checkSpiritBox(spiritBox)
+                end)
+            end
+        end
+    end
+end
+
+-- Monitor Equipment folder
+workspace.Equipment.ChildAdded:Connect(function(child)
+    if child.Name == "Spirit Box" then
+        setupSpiritBoxMonitoring(child)
+    end
+end)
+
+-- Monitor Character's EquipmentModel
+if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
+    workspace.Character.EquipmentModel.ChildAdded:Connect(function(child)
+        if child.Name == "Spirit Box" then
+            setupSpiritBoxMonitoring(child)
+        end
+    end)
+end
+
+-- Check for existing Spirit Boxes
+local equipmentSpiritBox = workspace.Equipment:FindFirstChild("Spirit Box")
+if equipmentSpiritBox then
+    setupSpiritBoxMonitoring(equipmentSpiritBox)
+end
+
+if workspace:FindFirstChild("Character") and workspace.Character:FindFirstChild("EquipmentModel") then
+    local characterSpiritBox = workspace.Character.EquipmentModel:FindFirstChild("SpiritBox")
+    if characterSpiritBox then
+        setupSpiritBoxMonitoring(characterSpiritBox)
+    end
+end
