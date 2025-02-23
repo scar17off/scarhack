@@ -277,43 +277,21 @@ end
 setupMotionMonitoring()
 
 -- Monitor for freezing temperatures
-local function checkThermometer(thermometer)
-    if not table.find(evidenceFound, "Freezing") then
-        local tempLabel = thermometer:FindFirstChild("Temp")
-        if tempLabel and tempLabel:FindFirstChild("SurfaceGui") then
-            local textLabel = tempLabel.SurfaceGui:FindFirstChild("TextLabel")
-            if textLabel then
-                local text = textLabel.Text
-                -- Extract number from text (handles formats like "-2.5°C" or "-2.5 °C")
-                local number = tonumber(string.match(text, "([%-%.%d]+)"))
-                -- Check if it's a valid negative number (not nil and less than 0)
-                if number and number < 0 then
-                    -- Wait a short moment to confirm it's not temporary
-                    task.wait(0.1)
-                    -- Check again to avoid false positives
-                    if thermometer.Parent and textLabel.Parent then
-                        local newText = textLabel.Text
-                        local newNumber = tonumber(string.match(newText, "([%-%.%d]+)"))
-                        if newNumber and newNumber < 0 then
-                            table.insert(evidenceFound, "Freezing")
-                            -- Update first available label
-                            if evidenceLabel_1:GetText() == "N/A" then
-                                evidenceLabel_1:SetText("Freezing")
-                            elseif evidenceLabel_2:GetText() == "N/A" then
-                                evidenceLabel_2:SetText("Freezing")
-                            elseif evidenceLabel_3:GetText() == "N/A" then
-                                evidenceLabel_3:SetText("Freezing")
-                            end
-                        end
-                    end
-                end
-            end
+local thermometerConnections = {} -- Store connections for cleanup
+
+local function disconnectThermometer(thermometer)
+    if thermometerConnections[thermometer] then
+        for _, connection in ipairs(thermometerConnections[thermometer]) do
+            connection:Disconnect()
         end
+        thermometerConnections[thermometer] = nil
     end
 end
 
 local function setupThermometerMonitoring(thermometer)
     if thermometer then
+        thermometerConnections[thermometer] = {}
+        
         -- Check initial state
         checkThermometer(thermometer)
         
@@ -322,9 +300,10 @@ local function setupThermometerMonitoring(thermometer)
         if tempLabel and tempLabel:FindFirstChild("SurfaceGui") then
             local textLabel = tempLabel.SurfaceGui:FindFirstChild("TextLabel")
             if textLabel then
-                textLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                local connection = textLabel:GetPropertyChangedSignal("Text"):Connect(function()
                     checkThermometer(thermometer)
                 end)
+                table.insert(thermometerConnections[thermometer], connection)
             end
         end
     end
@@ -333,7 +312,7 @@ end
 -- Monitor Equipment folder and all players
 local function monitorAllThermometers()
     -- Check workspace Equipment
-    workspace.Equipment.ChildAdded:Connect(function(child)
+    local equipmentConnection = workspace.Equipment.ChildAdded:Connect(function(child)
         if child.Name == "Thermometer" then
             setupThermometerMonitoring(child)
         end
@@ -345,39 +324,58 @@ local function monitorAllThermometers()
         setupThermometerMonitoring(equipmentThermometer)
     end
     
-    -- Monitor all EquipmentModels in workspace
-    local function checkEquipmentModel(model)
-        if model then
-            -- Monitor for new thermometers
-            model.ChildAdded:Connect(function(child)
-                if child.Name == "Thermometer" then
-                    setupThermometerMonitoring(child)
-                end
-            end)
-            
-            -- Check existing thermometer
-            local thermometer = model:FindFirstChild("Thermometer")
-            if thermometer then
-                setupThermometerMonitoring(thermometer)
+    -- Monitor character equipment
+    local function setupCharacterMonitoring(character)
+        local equipModel = character:WaitForChild("EquipmentModel", 5)
+        if not equipModel then return end
+        
+        -- Monitor for new thermometers
+        local addedConnection = equipModel.ChildAdded:Connect(function(child)
+            if child.Name == "Thermometer" then
+                setupThermometerMonitoring(child)
             end
+        end)
+        
+        -- Monitor for removed thermometers
+        local removedConnection = equipModel.ChildRemoved:Connect(function(child)
+            if child.Name == "Thermometer" then
+                disconnectThermometer(child)
+            end
+        end)
+        
+        -- Store connections for cleanup
+        thermometerConnections[character] = {addedConnection, removedConnection}
+        
+        -- Check existing thermometer
+        local thermometer = equipModel:FindFirstChild("Thermometer")
+        if thermometer then
+            setupThermometerMonitoring(thermometer)
         end
     end
     
-    -- Check all existing EquipmentModels
-    for _, obj in ipairs(workspace:GetChildren()) do
-        local equipModel = obj:FindFirstChild("EquipmentModel")
-        if equipModel then
-            checkEquipmentModel(equipModel)
-        end
-    end
-    
-    -- Monitor for new EquipmentModels
+    -- Monitor for new characters
     workspace.ChildAdded:Connect(function(child)
-        local equipModel = child:FindFirstChild("EquipmentModel")
-        if equipModel then
-            checkEquipmentModel(equipModel)
+        if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+            setupCharacterMonitoring(child)
         end
     end)
+    
+    -- Monitor for removed characters
+    workspace.ChildRemoved:Connect(function(child)
+        if thermometerConnections[child] then
+            for _, connection in ipairs(thermometerConnections[child]) do
+                connection:Disconnect()
+            end
+            thermometerConnections[child] = nil
+        end
+    end)
+    
+    -- Check existing characters
+    for _, child in ipairs(workspace:GetChildren()) do
+        if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+            setupCharacterMonitoring(child)
+        end
+    end
 end
 
 -- Monitor for Spirit Box responses
