@@ -5,23 +5,34 @@ local window = UI.CreateWindow()
 -- Categories
 local ESP = window:CreateCategory("ESP")
 
-ESP:AddObjectListener(workspace.Map.Ingame.Map, {
+ESPLibrary:AddObjectListener(workspace.Map.Ingame.Map, {
     Name = "Generator",
     CustomName = "Generators",
     Color = Color3.fromRGB(255, 255, 0),
     IsEnabled = "Generator"
 })
 
-local espToggle = ESP:CreateToggle({
+ESPLibrary:AddObjectListener(workspace.Players, {
+    CustomName = function(obj) return obj.Name end,
+    Color = Color3.fromRGB(255, 0, 0),
+    IsEnabled = "Killer"
+})
+
+ESPLibrary:AddObjectListener(workspace.Players, {
+    CustomName = function(obj) return obj.Name end,
+    Color = Color3.fromRGB(0, 255, 0),
+    IsEnabled = "Survivor"
+})
+
+ESP:CreateToggle({
     text = "ESP",
     default = false,
     callback = function(value)
-        ESPLibrary.Players = value
         ESPLibrary:Toggle(value)
     end
 })
 
-espToggle:AddToggle({
+ESP:CreateToggle({
     text = "Boxes",
     default = false,
     callback = function(value)
@@ -29,7 +40,15 @@ espToggle:AddToggle({
     end
 })
 
-espToggle:AddToggle({
+ESP:CreateToggle({
+    text = "Names",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Names = value
+    end
+})
+
+ESP:CreateToggle({
     text = "Generators",
     default = false,
     callback = function(value)
@@ -37,10 +56,18 @@ espToggle:AddToggle({
     end
 })
 
-espToggle:AddToggle({
+ESP:CreateToggle({
     text = "Killers",
     default = false,
     callback = function(value)
-        -- ESPLibrary.Killers = value
+        ESPLibrary.Killers = value
+    end
+})
+
+ESP:CreateToggle({
+    text = "Survivors",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Survivors = value
     end
 })
