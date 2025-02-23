@@ -85,7 +85,7 @@ function ESP:GetColor(obj)
         return p.Team.TeamColor.Color
     end
 
-    return self.Color
+    return self.DefaultColor
 end
 
 function ESP:GetPlrFromChar(char)
@@ -456,7 +456,7 @@ function ESP:Add(obj, options)
     local box = setmetatable({
         Name = options.Name or obj.Name,
         Type = "Box",
-        Color = options.Color or self:GetColor(obj),
+        Color = options.Color,
         Size = options.Size or self.BoxSize,
         Object = obj,
         Player = options.Player or plrs:GetPlayerFromCharacter(obj),
