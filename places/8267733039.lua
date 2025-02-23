@@ -69,8 +69,8 @@ local evidenceLabel_3 = Evidences:CreateLabel("N/A")
 -- Monitor for new evidence and update labels
 local evidenceFound = {}
 
-workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
-    if obj.Name == "EMF" and obj.Value == 5 then
+workspace.Dynamic.Evidence.EMF.ChildAdded:Connect(function(obj)
+    if obj.Value == 5 then
         if not table.find(evidenceFound, "EMF 5") then
             table.insert(evidenceFound, "EMF 5")
             -- Update first available label
@@ -82,29 +82,33 @@ workspace.Dynamic.Evidence.DescendantAdded:Connect(function(obj)
                 evidenceLabel_3:SetText("EMF 5")
             end
         end
-    elseif obj.Name == "Fingerprints" then
-        if not table.find(evidenceFound, "Fingerprint") then
-            table.insert(evidenceFound, "Fingerprint")
-            -- Update first available label
-            if evidenceLabel_1:GetText() == "N/A" then
-                evidenceLabel_1:SetText("Fingerprints")
-            elseif evidenceLabel_2:GetText() == "N/A" then
-                evidenceLabel_2:SetText("Fingerprints")
-            elseif evidenceLabel_3:GetText() == "N/A" then
-                evidenceLabel_3:SetText("Fingerprints")
-            end
+    end
+end)
+
+workspace.Dynamic.Evidence.Fingerprints.ChildAdded:Connect(function(obj)
+    if not table.find(evidenceFound, "Fingerprint") then
+        table.insert(evidenceFound, "Fingerprint")
+        -- Update first available label
+        if evidenceLabel_1:GetText() == "N/A" then
+            evidenceLabel_1:SetText("Fingerprints")
+        elseif evidenceLabel_2:GetText() == "N/A" then
+            evidenceLabel_2:SetText("Fingerprints")
+        elseif evidenceLabel_3:GetText() == "N/A" then
+            evidenceLabel_3:SetText("Fingerprints")
         end
-    elseif obj.Name == "Orbs" then
-        if not table.find(evidenceFound, "Orb") then
-            table.insert(evidenceFound, "Orb")
-            -- Update first available label
-            if evidenceLabel_1:GetText() == "N/A" then
-                evidenceLabel_1:SetText("Orb")
-            elseif evidenceLabel_2:GetText() == "N/A" then
-                evidenceLabel_2:SetText("Orb")
-            elseif evidenceLabel_3:GetText() == "N/A" then
-                evidenceLabel_3:SetText("Orb")
-            end
+    end
+end)
+
+workspace.Dynamic.Evidence.Orbs.ChildAdded:Connect(function(obj)
+    if not table.find(evidenceFound, "Orb") then
+        table.insert(evidenceFound, "Orb")
+        -- Update first available label
+        if evidenceLabel_1:GetText() == "N/A" then
+            evidenceLabel_1:SetText("Orb")
+        elseif evidenceLabel_2:GetText() == "N/A" then
+            evidenceLabel_2:SetText("Orb")
+        elseif evidenceLabel_3:GetText() == "N/A" then
+            evidenceLabel_3:SetText("Orb")
         end
     end
 end)
