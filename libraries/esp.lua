@@ -168,7 +168,9 @@ function boxBase:Update()
 
     -- Check if ESP is enabled and if this specific object should be visible
     local isEnabled = true
-    if type(self.IsEnabled) == "function" then
+    if type(self.IsEnabled) == "string" then
+        isEnabled = ESP[self.IsEnabled] -- Get the toggle value from ESP table
+    elseif type(self.IsEnabled) == "function" then
         isEnabled = self.IsEnabled(self.Object)
     end
 
