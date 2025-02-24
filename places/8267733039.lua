@@ -40,6 +40,12 @@ ESPLibrary:AddObjectListener(workspace.Map, {
     IsEnabled = "Bone"
 })
 
+ESPLibrary:AddObjectListener(workspace.Map.cursed_object, {
+    CustomName = function(obj) return obj.Name end,
+    Color = Color3.fromRGB(148, 0, 211),
+    IsEnabled = "CursedObject"
+})
+
 -- ESP Toggles
 ESP:CreateToggle({
     text = "ESP",
@@ -86,6 +92,14 @@ ESP:CreateToggle({
     default = false,
     callback = function(value)
         ESPLibrary.Bone = value
+    end
+})
+
+ESP:CreateToggle({
+    text = "Cursed Object",
+    default = false,
+    callback = function(value)
+        ESPLibrary.CursedObject = value
     end
 })
 
@@ -516,6 +530,20 @@ timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
 end)
 -- Set initial time
 peaceTimeLabel:SetText("Peace time: " .. timerLabel.Text)
+
+-- Action status
+local actionLabel = Sanity:CreateLabel("Action: Roaming")
+
+-- Monitor heartbeat for hunting
+local heartbeat = workspace:FindFirstChild("Heartbeat")
+if heartbeat then
+    heartbeat:GetPropertyChangedSignal("IsPlaying"):Connect(function()
+        actionLabel:SetText("Action: " .. (heartbeat.IsPlaying and "Hunting" or "Roaming"))
+    end)
+end
+
+-- Separator
+Sanity:CreateLabel("=-=-=-=-=-=-=-=")
 
 local avgSanityLabel = Sanity:CreateLabel("Avg sanity: 100%")
 
