@@ -40,7 +40,7 @@ ESPLibrary:AddObjectListener(workspace.Map, {
     IsEnabled = "Bone"
 })
 
-ESPLibrary:AddObjectListener(workspace.Map.cursed_object, {
+ESPLibrary:AddObjectListener(workspace.Map.cursed_object:GetChildren()[1], {
     CustomName = function(obj) return obj.Name end,
     Color = Color3.fromRGB(148, 0, 211),
     IsEnabled = "CursedObject"
@@ -106,6 +106,28 @@ ESP:CreateToggle({
 -- Evidence Information
 local Evidences = window:CreateCategory("Evidences")
 
+-- Chat mode toggle and map
+local chatMode = false
+Evidences:CreateToggle({
+    text = "Announce",
+    default = false,
+    callback = function(value)
+        chatMode = value
+    end
+})
+
+-- Evidence abbreviation map
+local evidenceAbbr = {
+    ["EMF 5"] = "emf5",
+    ["Fingerprints"] = "ft",
+    ["Orb"] = "orbs",
+    ["Motion"] = "pm",
+    ["Spirit Box"] = "spiritbox",
+    ["Book Writing"] = "book",
+    ["Freezing"] = "freezing"
+}
+
+-- Evidence labels
 local evidenceLabel_1 = Evidences:CreateLabel("N/A")
 local evidenceLabel_2 = Evidences:CreateLabel("N/A")
 local evidenceLabel_3 = Evidences:CreateLabel("N/A")
@@ -113,48 +135,35 @@ local evidenceLabel_3 = Evidences:CreateLabel("N/A")
 -- Monitor for new evidence and update labels
 local evidenceFound = {}
 
-workspace.Dynamic.Evidence.EMF.ChildAdded:Connect(function(obj)
-    if obj.Name == "EMF5" then
-        if not table.find(evidenceFound, "EMF 5") then
-            table.insert(evidenceFound, "EMF 5")
-            -- Update first available label
-            if evidenceLabel_1:GetText() == "N/A" then
-                evidenceLabel_1:SetText("EMF 5")
-            elseif evidenceLabel_2:GetText() == "N/A" then
-                evidenceLabel_2:SetText("EMF 5")
-            elseif evidenceLabel_3:GetText() == "N/A" then
-                evidenceLabel_3:SetText("EMF 5")
+local function addEvidence(evidenceName)
+    if not table.find(evidenceFound, evidenceName) then
+        table.insert(evidenceFound, evidenceName)
+        -- Find first available N/A label and update it
+        for _, label in ipairs({evidenceLabel_1, evidenceLabel_2, evidenceLabel_3}) do
+            if label:GetText() == "N/A" then
+                label:SetText(evidenceName)
+                -- Send chat message if chat mode is enabled
+                if chatMode and evidenceAbbr[evidenceName] then
+                    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(evidenceAbbr[evidenceName], "All")
+                end
+                break
             end
         end
+    end
+end
+
+workspace.Dynamic.Evidence.EMF.ChildAdded:Connect(function(obj)
+    if obj.Name == "EMF5" then
+        addEvidence("EMF 5")
     end
 end)
 
 workspace.Dynamic.Evidence.Fingerprints.ChildAdded:Connect(function(obj)
-    if not table.find(evidenceFound, "Fingerprints") then
-        table.insert(evidenceFound, "Fingerprints")
-        -- Update first available label
-        if evidenceLabel_1:GetText() == "N/A" then
-            evidenceLabel_1:SetText("Fingerprints")
-        elseif evidenceLabel_2:GetText() == "N/A" then
-            evidenceLabel_2:SetText("Fingerprints")
-        elseif evidenceLabel_3:GetText() == "N/A" then
-            evidenceLabel_3:SetText("Fingerprints")
-        end
-    end
+    addEvidence("Fingerprints")
 end)
 
 workspace.Dynamic.Evidence.Orbs.ChildAdded:Connect(function(obj)
-    if not table.find(evidenceFound, "Orb") then
-        table.insert(evidenceFound, "Orb")
-        -- Update first available label
-        if evidenceLabel_1:GetText() == "N/A" then
-            evidenceLabel_1:SetText("Orb")
-        elseif evidenceLabel_2:GetText() == "N/A" then
-            evidenceLabel_2:SetText("Orb")
-        elseif evidenceLabel_3:GetText() == "N/A" then
-            evidenceLabel_3:SetText("Orb")
-        end
-    end
+    addEvidence("Orb")
 end)
 
 -- Monitor for book writing
@@ -185,15 +194,7 @@ local function checkBookWriting()
             end
 
             if hasWriting then
-                table.insert(evidenceFound, "Book Writing")
-                -- Update first available label
-                if evidenceLabel_1:GetText() == "N/A" then
-                    evidenceLabel_1:SetText("Book Writing")
-                elseif evidenceLabel_2:GetText() == "N/A" then
-                    evidenceLabel_2:SetText("Book Writing")
-                elseif evidenceLabel_3:GetText() == "N/A" then
-                    evidenceLabel_3:SetText("Book Writing")
-                end
+                addEvidence("Book Writing")
             end
         end
     end
@@ -235,15 +236,7 @@ local function checkMotion(part)
                 if part.Parent and part:IsA("Part") then
                     r, g, b = part.Color.R, part.Color.G, part.Color.B
                     if r > 0.8 and g < 0.2 and b < 0.2 and not table.find(evidenceFound, "Motion") then
-                        table.insert(evidenceFound, "Motion")
-                        -- Update first available label
-                        if evidenceLabel_1:GetText() == "N/A" then
-                            evidenceLabel_1:SetText("Motion")
-                        elseif evidenceLabel_2:GetText() == "N/A" then
-                            evidenceLabel_2:SetText("Motion")
-                        elseif evidenceLabel_3:GetText() == "N/A" then
-                            evidenceLabel_3:SetText("Motion")
-                        end
+                        addEvidence("Motion")
                     end
                 end
                 task.wait(0.1)
@@ -316,15 +309,7 @@ local function checkThermometer(thermometer)
                         local newText = textLabel.Text
                         local newNumber = tonumber(string.match(newText, "([%-%.%d]+)"))
                         if newNumber and newNumber < 0 then
-                            table.insert(evidenceFound, "Freezing")
-                            -- Update first available label
-                            if evidenceLabel_1:GetText() == "N/A" then
-                                evidenceLabel_1:SetText("Freezing")
-                            elseif evidenceLabel_2:GetText() == "N/A" then
-                                evidenceLabel_2:SetText("Freezing")
-                            elseif evidenceLabel_3:GetText() == "N/A" then
-                                evidenceLabel_3:SetText("Freezing")
-                            end
+                            addEvidence("Freezing")
                         end
                     end
                 end
@@ -451,15 +436,7 @@ local function checkSpiritBox(spiritBox)
             -- Check if there are any GUI elements besides Template
             for _, child in ipairs(main:GetChildren()) do
                 if (child:IsA("SurfaceGui") or child:IsA("BillboardGui")) and child.Name ~= "Template" then
-                    table.insert(evidenceFound, "Spirit Box")
-                    -- Update first available label
-                    if evidenceLabel_1:GetText() == "N/A" then
-                        evidenceLabel_1:SetText("Spirit Box")
-                    elseif evidenceLabel_2:GetText() == "N/A" then
-                        evidenceLabel_2:SetText("Spirit Box")
-                    elseif evidenceLabel_3:GetText() == "N/A" then
-                        evidenceLabel_3:SetText("Spirit Box")
-                    end
+                    addEvidence("Spirit Box")
                     break
                 end
             end
