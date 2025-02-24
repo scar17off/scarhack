@@ -506,6 +506,17 @@ monitorAllSpiritBoxes()
 
 -- Sanity Information
 local Sanity = window:CreateCategory("Sanity")
+
+local peaceTimeLabel = Sanity:CreateLabel("Peace time: 00:00")
+
+-- Monitor peace timer
+local timerLabel = workspace.Van.Timer.SurfaceGui.Timer
+timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
+    peaceTimeLabel:SetText("Peace time: " .. timerLabel.Text)
+end)
+-- Set initial time
+peaceTimeLabel:SetText("Peace time: " .. timerLabel.Text)
+
 local avgSanityLabel = Sanity:CreateLabel("Avg sanity: 100%")
 
 local playerLabels = {}
@@ -577,3 +588,16 @@ playersFrame.ChildRemoved:Connect(function(child)
         updateAverageSanity()
     end
 end)
+
+-- Teleports
+Teleports = window:CreateCategory("Teleports")
+
+Teleports:CreateButton({
+    text = "TP to Van",
+    callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and workspace.Van:FindFirstChild("Spawn") then
+            character:PivotTo(workspace.Van.Spawn.CFrame)
+        end
+    end
+})
