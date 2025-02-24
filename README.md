@@ -64,6 +64,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 
 ### Specter
 - ESP
+- Auto collect evidence
+- Van Teleport
+- Sanity and peace time information
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
