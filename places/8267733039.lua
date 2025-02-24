@@ -40,11 +40,13 @@ ESPLibrary:AddObjectListener(workspace.Map, {
     IsEnabled = "Bone"
 })
 
-ESPLibrary:AddObjectListener(workspace.Map.cursed_object:GetChildren()[1], {
-    CustomName = function(obj) return obj.Name end,
-    Color = Color3.fromRGB(148, 0, 211),
-    IsEnabled = "CursedObject"
-})
+if workspace.Map.cursed_object:GetChildren()[1] then
+    ESPLibrary:AddObjectListener(workspace.Map.cursed_object:GetChildren()[1], {
+        CustomName = function(obj) return obj.Name end,
+        Color = Color3.fromRGB(148, 0, 211),
+        IsEnabled = "CursedObject"
+    })
+end
 
 -- ESP Toggles
 ESP:CreateToggle({
