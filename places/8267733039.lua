@@ -419,13 +419,24 @@ local function monitorAllThermometers()
 end
 
 -- Monitor for Spirit Box responses
+local spiritBoxConnections = {}
+
+local function disconnectSpiritBox(spiritBox)
+    if spiritBoxConnections[spiritBox] then
+        for _, connection in ipairs(spiritBoxConnections[spiritBox]) do
+            connection:Disconnect()
+        end
+        spiritBoxConnections[spiritBox] = nil
+    end
+end
+
 local function checkSpiritBox(spiritBox)
     if not table.find(evidenceFound, "Spirit Box") then
         local main = spiritBox:FindFirstChild("Main")
         if main then
-            -- Check if there are any SurfaceGuis besides Template
-            for _, child in ipairs(main:GetDescendants()) do
-                if child:IsA("SurfaceGui") and child.Name ~= "Template" then
+            -- Check if there are any GUI elements besides Template
+            for _, child in ipairs(main:GetChildren()) do
+                if (child:IsA("SurfaceGui") or child:IsA("BillboardGui")) and child.Name ~= "Template" then
                     table.insert(evidenceFound, "Spirit Box")
                     -- Update first available label
                     if evidenceLabel_1:GetText() == "N/A" then
@@ -444,27 +455,41 @@ end
 
 local function setupSpiritBoxMonitoring(spiritBox)
     if spiritBox then
+        -- Disconnect existing connections if any
+        disconnectSpiritBox(spiritBox)
+        
+        -- Create new connections table
+        spiritBoxConnections[spiritBox] = {}
+        
         -- Check initial state
         checkSpiritBox(spiritBox)
         
-        -- Monitor for new SurfaceGuis
-        local main = spiritBox:FindFirstChild("Main")
+        -- Monitor for new GUIs
+        local main = spiritBox:WaitForChild("Main", 5)
         if main then
-            main.DescendantAdded:Connect(function(child)
-                if child:IsA("SurfaceGui") then
+            local connection = main.ChildAdded:Connect(function(child)
+                if child:IsA("SurfaceGui") or child:IsA("BillboardGui") then
                     checkSpiritBox(spiritBox)
                 end
             end)
+            table.insert(spiritBoxConnections[spiritBox], connection)
         end
     end
 end
 
 -- Monitor Equipment folder and all players for Spirit Boxes
 local function monitorAllSpiritBoxes()
-    -- Check workspace Equipment
-    workspace.Equipment.ChildAdded:Connect(function(child)
+    -- Monitor workspace Equipment
+    local equipmentConnection = workspace.Equipment.ChildAdded:Connect(function(child)
         if child.Name == "Spirit Box" then
+            task.wait(0.1)
             setupSpiritBoxMonitoring(child)
+        end
+    end)
+    
+    local equipmentRemovedConnection = workspace.Equipment.ChildRemoved:Connect(function(child)
+        if child.Name == "Spirit Box" then
+            disconnectSpiritBox(child)
         end
     end)
     
@@ -473,40 +498,6 @@ local function monitorAllSpiritBoxes()
     if equipmentSpiritBox then
         setupSpiritBoxMonitoring(equipmentSpiritBox)
     end
-    
-    -- Monitor all EquipmentModels in workspace
-    local function checkEquipmentModel(model)
-        if model then
-            -- Monitor for new Spirit Boxes
-            model.ChildAdded:Connect(function(child)
-                if child.Name == "Spirit Box" then
-                    setupSpiritBoxMonitoring(child)
-                end
-            end)
-            
-            -- Check existing Spirit Box
-            local spiritBox = model:FindFirstChild("Spirit Box")
-            if spiritBox then
-                setupSpiritBoxMonitoring(spiritBox)
-            end
-        end
-    end
-    
-    -- Check all existing EquipmentModels
-    for _, obj in ipairs(workspace:GetChildren()) do
-        local equipModel = obj:FindFirstChild("EquipmentModel")
-        if equipModel then
-            checkEquipmentModel(equipModel)
-        end
-    end
-    
-    -- Monitor for new EquipmentModels
-    workspace.ChildAdded:Connect(function(child)
-        local equipModel = child:FindFirstChild("EquipmentModel")
-        if equipModel then
-            checkEquipmentModel(equipModel)
-        end
-    end)
 end
 
 -- Start monitoring
