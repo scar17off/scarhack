@@ -511,11 +511,11 @@ peaceTimeLabel:SetText("Peace time: " .. timerLabel.Text)
 -- Action status
 local actionLabel = Sanity:CreateLabel("Action: Roaming")
 
--- Monitor heartbeat for hunting
-local heartbeat = workspace:FindFirstChild("Heartbeat")
-if heartbeat then
-    heartbeat:GetPropertyChangedSignal("IsPlaying"):Connect(function()
-        actionLabel:SetText("Action: " .. (heartbeat.IsPlaying and "Hunting" or "Roaming"))
+-- Monitor hunt sound for hunting
+local huntSound = SoundService:FindFirstChild("Hunt")
+if huntSound then
+    huntSound:GetPropertyChangedSignal("IsPlaying"):Connect(function()
+        actionLabel:SetText("Action: " .. (huntSound.IsPlaying and "Hunting" or "Roaming"))
     end)
 end
 
