@@ -430,6 +430,32 @@ visuals:CreateToggle({
     end
 })
 
+-- No Fog
+local originalFogStart = Lighting.FogStart
+local originalFogEnd = Lighting.FogEnd
+local originalFogColor = Lighting.FogColor
+
+visuals:CreateToggle({
+    text = "No Fog",
+    callback = function(enabled)
+        if enabled then
+            -- Store original fog values and remove fog
+            originalFogStart = Lighting.FogStart
+            originalFogEnd = Lighting.FogEnd
+            originalFogColor = Lighting.FogColor
+
+            Lighting.FogStart = 0
+            Lighting.FogEnd = 9e9
+            Lighting.FogColor = Color3.fromRGB(255, 255, 255)
+        else
+            -- Restore original fog values
+            Lighting.FogStart = originalFogStart
+            Lighting.FogEnd = originalFogEnd
+            Lighting.FogColor = originalFogColor
+        end
+    end
+})
+
 -- [Scripts]
 scripts:CreateButton({
     text = "DEV V2",
