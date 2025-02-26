@@ -456,6 +456,43 @@ visuals:CreateToggle({
     end
 })
 
+-- 3P Unlock
+local PlayerModule = require(LocalPlayer.PlayerScripts:WaitForChild("PlayerModule"))
+local Controls = PlayerModule:GetControls()
+local originalMinZoom
+local originalMaxZoom
+
+visuals:CreateToggle({
+    text = "3P Unlock",
+    callback = function(enabled)
+        if enabled then
+            -- Store original zoom values
+            originalMinZoom = LocalPlayer.CameraMinZoomDistance
+            originalMaxZoom = LocalPlayer.CameraMaxZoomDistance
+            
+            -- Set unrestricted zoom distances
+            LocalPlayer.CameraMinZoomDistance = 0
+            LocalPlayer.CameraMaxZoomDistance = 1000
+            
+            -- Update camera controls if available
+            if Controls and Controls.gamepadZoom then
+                Controls.gamepadZoom:SetMinZoomDistance(0)
+                Controls.gamepadZoom:SetMaxZoomDistance(1000)
+            end
+        else
+            -- Restore original zoom values
+            LocalPlayer.CameraMinZoomDistance = originalMinZoom or 0.5
+            LocalPlayer.CameraMaxZoomDistance = originalMaxZoom or 400
+            
+            -- Restore camera controls if available
+            if Controls and Controls.gamepadZoom then
+                Controls.gamepadZoom:SetMinZoomDistance(originalMinZoom or 0.5)
+                Controls.gamepadZoom:SetMaxZoomDistance(originalMaxZoom or 400)
+            end
+        end
+    end
+})
+
 -- [Scripts]
 scripts:CreateButton({
     text = "DEV V2",
