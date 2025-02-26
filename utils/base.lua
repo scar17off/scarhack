@@ -75,6 +75,28 @@ movement:CreateToggle({
     end
 })
 
+-- Click TP
+local mouse = LocalPlayer:GetMouse()
+local clickTpConnection
+movement:CreateToggle({
+    text = "Click TP",
+    callback = function(state)
+        if state then
+            clickTpConnection = mouse.Button1Down:Connect(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetPos = mouse.Hit.Position
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+                end
+            end)
+        else
+            if clickTpConnection then
+                clickTpConnection:Disconnect()
+                clickTpConnection = nil
+            end
+        end
+    end
+})
+
 -- Speed and high jump
 local walkspeed = 16
 local jumppower = 50
