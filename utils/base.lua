@@ -16,6 +16,26 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/utils/placement.lua"))()
 
 -- [Movement]
+-- Infinite Jump
+local infiniteJumpConnection
+movement:CreateToggle({
+    text = "Infinite Jump",
+    callback = function(state)
+        if state then
+            infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            if infiniteJumpConnection then
+                infiniteJumpConnection:Disconnect()
+                infiniteJumpConnection = nil
+            end
+        end
+    end
+})
+
 -- No Clip
 local noClipConnection = nil
 movement:CreateToggle({
