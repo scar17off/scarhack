@@ -3,6 +3,7 @@ local window = UI.CreateWindow()
 
 local movement = window:CreateCategory("Movement")
 local visuals = window:CreateCategory("Visuals")
+local player = window:CreateCategory("Player")
 local scripts = window:CreateCategory("Scripts")
 
 -- Shortcuts
@@ -488,6 +489,27 @@ visuals:CreateToggle({
             if Controls and Controls.gamepadZoom then
                 Controls.gamepadZoom:SetMinZoomDistance(originalMinZoom or 0.5)
                 Controls.gamepadZoom:SetMaxZoomDistance(originalMaxZoom or 400)
+            end
+        end
+    end
+})
+
+-- [Player]
+-- Anti-AFK
+local antiAFKConnection
+player:CreateToggle({
+    text = "Anti-AFK",
+    callback = function(state)
+        if state then
+            local VirtualUser = game:GetService("VirtualUser")
+            antiAFKConnection = LocalPlayer.Idled:Connect(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        else
+            if antiAFKConnection then
+                antiAFKConnection:Disconnect()
+                antiAFKConnection = nil
             end
         end
     end
