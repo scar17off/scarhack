@@ -644,9 +644,9 @@ local Objectives = window:CreateCategory("Objectives")
 
 -- Create labels for each objective
 local objectiveLabels = {
-    Objectives:CreateLabel("1: ..."),
-    Objectives:CreateLabel("2: ..."),
-    Objectives:CreateLabel("3: ...")
+    Objectives:CreateLabel("..."),
+    Objectives:CreateLabel("..."),
+    Objectives:CreateLabel("...")
 }
 
 -- Function to update objective display
@@ -656,8 +656,11 @@ local function updateObjective(objectiveFrame, index)
         if textLabel then
             local text = textLabel.Text
             local isCompleted = objectiveFrame:FindFirstChild("Strike") ~= nil
-            local status = isCompleted and "✓" or "✗"
-            objectiveLabels[index]:SetText(status .. " " .. text)
+            if isCompleted then
+                objectiveLabels[index]:SetText("Done")
+            else
+                objectiveLabels[index]:SetText(text)
+            end
         end
     end
 end
@@ -666,10 +669,6 @@ end
 local objectivesFrame = workspace.Van.Objectives.SurfaceGui.Frame.Objectives
 
 -- Set initial objectives
-for i = 1, 3 do
-    objectiveLabels[i]:SetText("✗ ...")
-end
-
 for i = 1, 3 do
     local objective = objectivesFrame:FindFirstChild(tostring(i))
     if objective then
