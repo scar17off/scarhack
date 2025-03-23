@@ -665,6 +665,18 @@ end
 -- Get the objectives frame
 local objectivesFrame = workspace.Van.Objectives.SurfaceGui.Frame.Objectives
 
+-- Set initial objectives
+for i = 1, 3 do
+    objectiveLabels[i]:SetText("✗ ...")
+end
+
+for i = 1, 3 do
+    local objective = objectivesFrame:FindFirstChild(tostring(i))
+    if objective then
+        updateObjective(objective, i)
+    end
+end
+
 -- Monitor existing objectives
 for i = 1, 3 do
     local objective = objectivesFrame:FindFirstChild(tostring(i))
