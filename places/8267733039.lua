@@ -40,6 +40,20 @@ ESPLibrary:AddObjectListener(workspace.Map, {
     IsEnabled = "Bone"
 })
 
+ESPLibrary:AddObjectListener(workspace.Map, {
+    Name = "Safe",
+    CustomName = "Safe",
+    Color = Color3.fromRGB(255, 215, 0),
+    IsEnabled = "Safe"
+})
+
+ESPLibrary:AddObjectListener(workspace.Map, {
+    Name = "SafeKey",
+    CustomName = "Safe Key",
+    Color = Color3.fromRGB(0, 255, 255),
+    IsEnabled = "SafeKey"
+})
+
 if workspace.Map.cursed_object:GetChildren()[1] then
     ESPLibrary:AddObjectListener(workspace.Map.cursed_object:GetChildren()[1], {
         CustomName = function(obj) return obj.Name end,
@@ -94,6 +108,22 @@ ESP:CreateToggle({
     default = false,
     callback = function(value)
         ESPLibrary.Bone = value
+    end
+})
+
+ESP:CreateToggle({
+    text = "Safe",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Safe = value
+    end
+})
+
+ESP:CreateToggle({
+    text = "Safe Key",
+    default = false,
+    callback = function(value)
+        ESPLibrary.SafeKey = value
     end
 })
 
