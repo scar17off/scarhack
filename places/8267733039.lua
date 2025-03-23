@@ -639,98 +639,51 @@ Teleports:CreateButton({
     end
 })
 
--- Objectives Information
-local Objectives = window:CreateCategory("Objectives")
+-- Auto Van
+local autoVanEnabled = false
+local autoVanDistance = 8
 
--- Create labels for each objective
-local objectiveLabels = {
-    Objectives:CreateLabel("..."),
-    Objectives:CreateLabel("..."),
-    Objectives:CreateLabel("...")
-}
+Sanity:CreateToggle({
+    text = "Auto Van",
+    default = false,
+    callback = function(value)
+        autoVanEnabled = value
+    end
+})
 
--- Function to update objective display
-local function updateObjective(objectiveFrame, index)
-    if objectiveFrame and objectiveFrame:IsA("Frame") then
-        local textLabel = objectiveFrame:FindFirstChild("TextLabel")
-        if textLabel then
-            local text = textLabel.Text
-            local isCompleted = objectiveFrame:FindFirstChild("Strike") ~= nil
-            if isCompleted then
-                objectiveLabels[index]:SetText("Done")
-            else
-                objectiveLabels[index]:SetText(text)
+-- Auto Van logic
+local function getDistanceToGhost()
+    local character = game.Players.LocalPlayer.Character
+    if not character then return 999 end
+    
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then return 999 end
+    
+    -- Check all NPCs (ghosts)
+    for _, ghost in ipairs(workspace.ServerNPCs:GetChildren()) do
+        if ghost:IsA("Model") and ghost.PrimaryPart and ghost:FindFirstChild("Humanoid") then
+            -- Check if ghost is visible (not transparent)
+            local transparency = ghost.PrimaryPart.Transparency
+            if transparency < 1 then
+                local distance = (ghost.PrimaryPart.Position - humanoidRootPart.Position).Magnitude
+                return distance
             end
         end
     end
+    
+    return 999 -- Return large number if no visible ghost found
 end
 
--- Get the objectives frame
-local objectivesFrame = workspace.Van.Objectives.SurfaceGui.Frame.Objectives
-
--- Set initial objectives
-for i = 1, 3 do
-    local objective = objectivesFrame:FindFirstChild(tostring(i))
-    if objective then
-        updateObjective(objective, i)
-    end
-end
-
--- Monitor existing objectives
-for i = 1, 3 do
-    local objective = objectivesFrame:FindFirstChild(tostring(i))
-    if objective then
-        updateObjective(objective, i)
-        
-        -- Monitor text changes
-        local textLabel = objective:FindFirstChild("TextLabel")
-        if textLabel then
-            textLabel:GetPropertyChangedSignal("Text"):Connect(function()
-                updateObjective(objective, i)
-            end)
+-- Check distance periodically
+game:GetService("RunService").Heartbeat:Connect(function()
+    if not autoVanEnabled then return end
+    
+    local distance = getDistanceToGhost()
+    if distance <= autoVanDistance then
+        -- Teleport to van
+        local character = game.Players.LocalPlayer.Character
+        if character and workspace.Van:FindFirstChild("Spawn") then
+            character:PivotTo(workspace.Van.Spawn.CFrame)
         end
-        
-        -- Monitor completion status changes
-        objective.ChildAdded:Connect(function(child)
-            if child.Name == "Strike" then
-                updateObjective(objective, i)
-            end
-        end)
-        
-        objective.ChildRemoved:Connect(function(child)
-            if child.Name == "Strike" then
-                updateObjective(objective, i)
-            end
-        end)
-    end
-end
-
--- Monitor for changes in objectives
-objectivesFrame.ChildAdded:Connect(function(child)
-    local index = tonumber(child.Name)
-    if index and index >= 1 and index <= 3 then
-        task.wait(0.1)
-        updateObjective(child, index)
-        
-        -- Monitor text changes
-        local textLabel = child:FindFirstChild("TextLabel")
-        if textLabel then
-            textLabel:GetPropertyChangedSignal("Text"):Connect(function()
-                updateObjective(child, index)
-            end)
-        end
-        
-        -- Monitor completion status changes
-        child.ChildAdded:Connect(function(grandChild)
-            if grandChild.Name == "Strike" then
-                updateObjective(child, index)
-            end
-        end)
-        
-        child.ChildRemoved:Connect(function(grandChild)
-            if grandChild.Name == "Strike" then
-                updateObjective(child, index)
-            end
-        end)
     end
 end)
