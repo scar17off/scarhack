@@ -638,3 +638,88 @@ Teleports:CreateButton({
         end
     end
 })
+
+-- Objectives Information
+local Objectives = window:CreateCategory("Objectives")
+
+-- Create labels for each objective
+local objectiveLabels = {
+    Objectives:CreateLabel("1: ..."),
+    Objectives:CreateLabel("2: ..."),
+    Objectives:CreateLabel("3: ...")
+}
+
+-- Function to update objective display
+local function updateObjective(objectiveFrame, index)
+    if objectiveFrame and objectiveFrame:IsA("Frame") then
+        local textLabel = objectiveFrame:FindFirstChild("TextLabel")
+        if textLabel then
+            local text = textLabel.Text
+            local isCompleted = objectiveFrame:FindFirstChild("Strike") ~= nil
+            local status = isCompleted and "✓" or "✗"
+            objectiveLabels[index]:SetText(status .. " " .. text)
+        end
+    end
+end
+
+-- Get the objectives frame
+local objectivesFrame = workspace.Van.Objectives.SurfaceGui.Frame.Objectives
+
+-- Monitor existing objectives
+for i = 1, 3 do
+    local objective = objectivesFrame:FindFirstChild(tostring(i))
+    if objective then
+        updateObjective(objective, i)
+        
+        -- Monitor text changes
+        local textLabel = objective:FindFirstChild("TextLabel")
+        if textLabel then
+            textLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                updateObjective(objective, i)
+            end)
+        end
+        
+        -- Monitor completion status changes
+        objective.ChildAdded:Connect(function(child)
+            if child.Name == "Strike" then
+                updateObjective(objective, i)
+            end
+        end)
+        
+        objective.ChildRemoved:Connect(function(child)
+            if child.Name == "Strike" then
+                updateObjective(objective, i)
+            end
+        end)
+    end
+end
+
+-- Monitor for changes in objectives
+objectivesFrame.ChildAdded:Connect(function(child)
+    local index = tonumber(child.Name)
+    if index and index >= 1 and index <= 3 then
+        task.wait(0.1)
+        updateObjective(child, index)
+        
+        -- Monitor text changes
+        local textLabel = child:FindFirstChild("TextLabel")
+        if textLabel then
+            textLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                updateObjective(child, index)
+            end)
+        end
+        
+        -- Monitor completion status changes
+        child.ChildAdded:Connect(function(grandChild)
+            if grandChild.Name == "Strike" then
+                updateObjective(child, index)
+            end
+        end)
+        
+        child.ChildRemoved:Connect(function(grandChild)
+            if grandChild.Name == "Strike" then
+                updateObjective(child, index)
+            end
+        end)
+    end
+end)
