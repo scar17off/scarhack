@@ -54,7 +54,7 @@ ESPLibrary:AddObjectListener(workspace.Map, {
     IsEnabled = "SafeKey"
 })
 
-if workspace.Map.cursed_object:GetChildren()[1] then
+if workspace.Map:FindFirstChild("cursed_object") and workspace.Map.cursed_object:GetChildren()[1] then
     ESPLibrary:AddObjectListener(workspace.Map.cursed_object:GetChildren()[1], {
         CustomName = function(obj) return obj.Name end,
         Color = Color3.fromRGB(148, 0, 211),
