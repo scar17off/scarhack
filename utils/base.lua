@@ -3,6 +3,7 @@ local window = UI.CreateWindow()
 
 local movement = window:CreateCategory("Movement")
 local visuals = window:CreateCategory("Visuals")
+local esp = window:CreateCategory("ESP")
 local player = window:CreateCategory("Player")
 local scripts = window:CreateCategory("Scripts")
 
@@ -687,6 +688,96 @@ visuals:CreateToggle({
                 PlayerView.UpdateConnection = nil
             end
         end
+    end
+})
+
+-- [ESP]
+-- ESP
+esp:CreateToggle({
+    text = "ESP",
+    callback = function(state)
+        ESP.Enabled = state
+    end
+})
+
+-- Players
+esp:CreateToggle({
+    text = "Players",
+    callback = function(state)
+        ESP.Players = state
+    end
+})
+
+-- Team Color
+esp:CreateToggle({
+    text = "Team Color",
+    callback = function(state)
+        ESP.TeamColor = state
+    end
+})
+
+-- Teammates
+esp:CreateToggle({
+    text = "Teammates",
+    callback = function(state)
+        ESP.TeamMates = state
+    end
+})
+
+-- Tracers
+esp:CreateToggle({
+    text = "Tracers",
+    callback = function(state)
+        ESP.Tracers = state
+    end
+})
+
+-- Boxes
+esp:CreateToggle({
+    text = "Boxes",
+    callback = function(state)
+        ESP.Boxes = state
+    end
+})
+
+-- Names
+esp:CreateToggle({
+    text = "Names",
+    callback = function(state)
+        ESP.Names = state
+    end
+})
+
+-- Distance
+esp:CreateToggle({
+    text = "Distance",
+    callback = function(state)
+        ESP.Distance = state
+    end
+})
+
+-- Health
+esp:CreateToggle({
+    text = "Health",
+    callback = function(state)
+        ESP.Health.Enabled = state
+    end
+})
+
+-- FaceCamera
+esp:CreateToggle({
+    text = "Face Camera",
+    callback = function(state)
+        ESP.FaceCamera = state
+        ESP.Health.FaceCamera = state
+    end
+})
+
+-- Glow
+esp:CreateToggle({
+    text = "Glow",
+    callback = function(state)
+        ESP.Glow = state
     end
 })
 

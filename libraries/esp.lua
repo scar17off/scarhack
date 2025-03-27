@@ -19,6 +19,7 @@ local ESP = {
     GlowTransparency = 0.5,
     MaxDistance = 1000,
     Distance = false,
+    Tracers = false,
     Health = {
         Enabled = false,
         Side = "Right", -- "Left", "Right", "Top", "Bottom"
