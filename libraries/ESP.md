@@ -4,19 +4,19 @@ A powerful and flexible ESP (Extra Sensory Perception) library for Roblox that a
 
 ## Features
 
-- Box ESP
+- Box ESP with customizable thickness and color
 - Name Tags
 - Distance Display
 - Team Colors
 - Tracers
+- Health Bars
 - Glow/Highlight Effect
-- Custom Components
 - Object Listening
+- Dynamic Color Updates
 
 ## Basic Usage
-
 ```lua
-local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ESP.md"))()
+local ESP = loadstring(game:HttpGet("path/to/esp.lua"))()
 
 -- Toggle ESP
 ESP.Enabled = true
@@ -26,6 +26,7 @@ ESP.Boxes = true
 ESP.Names = true
 ESP.TeamColor = true
 ESP.Tracers = false
+ESP.Thickness = 2
 ```
 
 ## Settings
@@ -34,11 +35,34 @@ ESP.Tracers = false
 |----------|------|---------|-------------|
 | Enabled | boolean | false | Master toggle for ESP |
 | Boxes | boolean | true | Toggle box drawing |
-| Names | boolean | true | Toggle name tags |
-| TeamColor | boolean | true | Use team colors |
-| Tracers | boolean | false | Toggle tracers |
-| Glow | boolean | false | Toggle glow effect |
+| BoxShift | CFrame | CFrame.new(0,-1.5,0) | Offset for ESP boxes |
+| BoxSize | Vector3 | Vector3.new(4,6,0) | Size of ESP boxes |
+| Color | Color3 | RGB(255,170,0) | Default color when team colors disabled |
+| DefaultColor | Color3 | RGB(255,255,255) | Fallback color |
+| FaceCamera | boolean | false | Makes boxes face the camera |
+| Names | boolean | false | Toggle name tags |
+| TeamColor | boolean | false | Use team colors |
 | TeamMates | boolean | true | Show ESP for teammates |
+| Thickness | number | 2 | Line thickness for boxes and tracers |
+| AttachShift | number | 1 | Tracer attachment point shift |
+| MaxDistance | number | 1000 | Maximum render distance |
+| Distance | boolean | false | Show distance indicators |
+| Tracers | boolean | false | Show tracer lines |
+| Health | table | {Enabled=false,...} | Health bar configuration |
+| Glow | boolean | false | Toggle glow/highlight effect |
+| GlowColor | Color3 | RGB(255,255,255) | Color for glow effect |
+| GlowTeamColor | boolean | false | Use team colors for glow |
+| GlowTransparency | number | 0.5 | Transparency of glow effect |
+
+### Health Bar Settings
+```lua
+ESP.Health = {
+    Enabled = true,
+    Side = "Right", -- "Left", "Right", "Top", "Bottom"
+    Width = 2,
+    FaceCamera = false
+}
+```
 
 ## Methods
 
@@ -48,9 +72,15 @@ Add an object to the ESP system.
 
 ```lua
 ESP:Add(workspace.Enemy, {
-    Name = "Enemy",
-    Color = Color3.fromRGB(255, 0, 0),
-    Size = Vector3.new(4, 6, 0)
+    Name = "Enemy", -- Custom name to display
+    Color = Color3.fromRGB(255, 0, 0), -- Custom color
+    Size = Vector3.new(4, 6, 0), -- Custom box size
+    PrimaryPart = part, -- Optional part to track
+    IsEnabled = true, -- or function/property name
+    ColorDynamic = function() -- Dynamic color function
+        return Color3.fromRGB(255, 0, 0)
+    end,
+    RenderInNil = false -- Continue rendering if parent is nil
 })
 ```
 
@@ -59,36 +89,22 @@ ESP:Add(workspace.Enemy, {
 Listen for objects being added to a parent and automatically apply ESP.
 
 ```lua
--- Basic example: Track all humanoid models
 ESP:AddObjectListener(workspace, {
-    Type = "Model",
+    Type = "Model", -- Instance type to look for
+    Recursive = true, -- Check descendants
+    PrimaryPart = "HumanoidRootPart", -- Part to track
+    CustomName = function(obj)
+        return obj.Name
+    end,
+    ColorDynamic = function(obj)
+        return Color3.fromRGB(255, 0, 0)
+    end,
+    IsEnabled = "Enabled", -- Property name or function
     Validator = function(obj)
         return obj:FindFirstChild("Humanoid")
     end,
-    CustomName = function(obj)
-        return obj.Name .. " [NPC]"
-    end,
-    Color = Color3.fromRGB(255, 0, 0)
-})
-
--- Advanced example: Track items with custom properties
-ESP:AddObjectListener(workspace.Items, {
-    Type = "Model",
-    CustomName = function(obj) 
-        return obj:GetAttribute("DisplayName") 
-    end,
-    CustomProperties = {
-        Rarity = function(obj)
-            return obj:GetAttribute("Rarity")
-        end,
-        Distance = true
-    },
-    Color = function(obj)
-        local rarity = obj:GetAttribute("Rarity")
-        if rarity == "Legendary" then
-            return Color3.fromRGB(255, 215, 0)
-        end
-        return Color3.fromRGB(255, 255, 255)
+    OnAdded = function(box)
+        -- Called when ESP is added to an object
     end
 })
 ```
@@ -100,7 +116,7 @@ Get the ESP box instance for an object.
 ```lua
 local box = ESP:GetBox(workspace.Enemy)
 if box then
-    box.Color = Color3.fromRGB(255, 0, 0)
+    box:Remove() -- Remove ESP from object
 end
 ```
 
@@ -113,95 +129,30 @@ ESP:Toggle(true)  -- Enable
 ESP:Toggle(false) -- Disable
 ```
 
-## Advanced Usage
+## Overrides
 
-### Custom Components
-
-You can add custom components to ESP boxes:
+You can customize core ESP behavior through overrides:
 
 ```lua
-ESP:AddObjectListener(workspace.Enemies, {
-    Type = "Model",
-    Components = {
-        HealthBar = {
-            Type = "Square",
-            Color = Color3.fromRGB(0, 255, 0),
-            Thickness = 2,
-            Filled = true
-        },
-        Level = {
-            Type = "Text",
-            Color = Color3.fromRGB(255, 255, 255),
-            Size = 18
-        }
-    }
-})
-```
-
-### Team Override
-
-You can override the team detection:
-
-```lua
+-- Custom team detection
 ESP.Overrides.IsTeamMate = function(player)
     return player.Team.Name == "Defenders"
 end
-```
 
-### Custom Colors
-
-```lua
+-- Custom color logic
 ESP.Overrides.GetColor = function(object)
     local player = ESP:GetPlrFromChar(object)
     if player then
         if player.Team.Name == "Red" then
             return Color3.fromRGB(255, 0, 0)
-        else
-            return Color3.fromRGB(0, 0, 255)
         end
     end
     return ESP.Color
 end
+
+-- Custom player detection
+ESP.Overrides.GetPlrFromChar = function(char)
+    -- Custom logic to get player from character
+    return game:GetService("Players"):GetPlayerFromCharacter(char)
+end
 ```
-
-## Tips & Best Practices
-
-1. Always clean up ESP boxes when objects are removed:
-```lua
-local ESPToggle = ESPSection:CreateToggle("Enable ESP", false, function(Value)
-    ESP_ENABLED = Value
-    ESP:Toggle(Value)
-    
-    -- Clean up ESP objects when disabling
-    if not Value then
-        for _, v in pairs(ESP.Objects) do
-            if v.Type == "Box" then
-                v:Remove()
-            end
-        end
-        -- Clear the objects table
-        table.clear(ESP.Objects)
-    end
-end)
-```
-2. Use `ColorDynamic` for objects that need color updates
-3. Implement proper validation in object listeners
-4. Consider performance when adding many ESP objects
-5. Use custom properties sparingly
-
-## Common Issues
-
-1. **ESP not showing:**
-   - Check if `ESP.Enabled` is true
-   - Verify object has proper PrimaryPart
-   - Check if object is within render distance
-
-2. **Performance Issues:**
-   - Reduce number of tracked objects
-   - Simplify custom update functions
-   - Use proper cleanup methods
-
-3. **Objects not being tracked:**
-   - Verify listener settings
-   - Check validator functions
-   - Ensure proper parent hierarchy
