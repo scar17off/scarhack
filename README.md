@@ -71,6 +71,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 
 ### dingus
 - No NPCs
+- ESP
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
