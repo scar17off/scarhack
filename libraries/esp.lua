@@ -14,7 +14,8 @@ local ESP = {
     TeamMates = true,
     Players = true,
     Glow = false,
-    GlowColor = Color3.fromRGB(255, 0, 0),
+    GlowColor = Color3.fromRGB(255, 255, 255),
+    GlowTeamColor = false,
     GlowTransparency = 0.5,
     MaxDistance = 1000,
     Distance = false,
@@ -315,13 +316,32 @@ function boxBase:Update()
     if ESP.Glow then
         if not self.Components.Highlight then
             self.Components.Highlight = Instance.new("Highlight")
-            self.Components.Highlight.FillTransparency = ESP.GlowTransparency
-            self.Components.Highlight.OutlineTransparency = 1
             self.Components.Highlight.Parent = self.Object
         end
         
+        -- Determine glow color based on team settings
+        local glowColor
+        if ESP.GlowTeamColor then
+            local p = self:GetPlrFromChar(self.Object)
+            if p and p.Team then
+                glowColor = p.Team.TeamColor.Color
+            else
+                glowColor = ESP.GlowColor
+            end
+        else
+            glowColor = ESP.GlowColor
+        end
+        
+        -- Set the outline to be solid and visible
+        self.Components.Highlight.OutlineTransparency = 0
+        self.Components.Highlight.OutlineColor = glowColor
+        
+        -- Set the fill to be more transparent
         self.Components.Highlight.FillTransparency = ESP.GlowTransparency
-        self.Components.Highlight.FillColor = ESP.Overrides.GetGlowColor and ESP.Overrides.GetGlowColor(self.Object) or ESP.GlowColor
+        self.Components.Highlight.FillColor = glowColor
+        
+        -- Enable the highlight
+        self.Components.Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         self.Components.Highlight.Enabled = true
     else
         if self.Components.Highlight then
