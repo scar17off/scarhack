@@ -361,7 +361,7 @@ visuals:CreateToggle({
                     continue
                 end
 
-                if part:IsA("BasePart") and not part:IsA("Terrain") then
+                if part:IsA("BasePart") and not part:IsA("Terrain") and part.Transparency < 1 then
                     pcall(function()
                         local texture = Instance.new("Texture")
                         texture.Texture = getTextureForMaterial(part.Material)
@@ -457,38 +457,234 @@ visuals:CreateToggle({
     end
 })
 
--- 3P Unlock
-local PlayerModule = require(LocalPlayer.PlayerScripts:WaitForChild("PlayerModule"))
-local Controls = PlayerModule:GetControls()
-local originalMinZoom
-local originalMaxZoom
+pcall(function()
+    -- 3P Unlock
+    local PlayerModule = LocalPlayer.PlayerScripts:FindFirstChild("PlayerModule")
+    local Controls
+    if PlayerModule then
+    PlayerModule = require(PlayerModule)
+    Controls = PlayerModule:GetControls()
+    end
 
-visuals:CreateToggle({
-    text = "3P Unlock",
-    callback = function(enabled)
-        if enabled then
-            -- Store original zoom values
-            originalMinZoom = LocalPlayer.CameraMinZoomDistance
-            originalMaxZoom = LocalPlayer.CameraMaxZoomDistance
+    local originalMinZoom
+    local originalMaxZoom
+
+    visuals:CreateToggle({
+        text = "3P Unlock",
+        callback = function(enabled)
+            if enabled then
+                -- Store original zoom values
+                originalMinZoom = LocalPlayer.CameraMinZoomDistance
+                originalMaxZoom = LocalPlayer.CameraMaxZoomDistance
+                
+                -- Set unrestricted zoom distances
+                LocalPlayer.CameraMinZoomDistance = 0
+                LocalPlayer.CameraMaxZoomDistance = 1000
+                
+                -- Update camera controls if available
+                if Controls and Controls.gamepadZoom then
+                    Controls.gamepadZoom:SetMinZoomDistance(0)
+                    Controls.gamepadZoom:SetMaxZoomDistance(1000)
+                end
+            else
+                -- Restore original zoom values
+                LocalPlayer.CameraMinZoomDistance = originalMinZoom or 0.5
+                LocalPlayer.CameraMaxZoomDistance = originalMaxZoom or 400
+                
+                -- Restore camera controls if available
+                if Controls and Controls.gamepadZoom then
+                    Controls.gamepadZoom:SetMinZoomDistance(originalMinZoom or 0.5)
+                    Controls.gamepadZoom:SetMaxZoomDistance(originalMaxZoom or 400)
+                end
+            end
+        end
+    })
+end)
+
+-- PlayerView
+local PlayerView = {}
+PlayerView.CurrentIndex = 1
+PlayerView.Enabled = false
+PlayerView.ViewportGui = nil
+
+local function createPlayerViewWindow()
+    local viewportGui = Instance.new("ScreenGui")
+    viewportGui.Name = "PlayerViewGui"
+    viewportGui.ResetOnSpawn = false
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 980, 0, 720)
+    mainFrame.Position = UDim2.new(0.5, -490, 0.5, -360)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = viewportGui
+    
+    -- Make draggable
+    local isDragging = false
+    local dragStart = nil
+    local startPos = nil
+    
+    mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and isDragging then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+        end
+    end)
+    
+    -- Viewport frame for player view
+    local viewportFrame = Instance.new("ViewportFrame")
+    viewportFrame.Size = UDim2.new(1, 0, 1, -40)  -- Leave space for footer
+    viewportFrame.Position = UDim2.new(0, 0, 0, 0)
+    viewportFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    viewportFrame.BorderSizePixel = 0
+    viewportFrame.Parent = mainFrame
+    
+    -- Footer frame
+    local footer = Instance.new("Frame")
+    footer.Size = UDim2.new(1, 0, 0, 40)
+    footer.Position = UDim2.new(0, 0, 1, -40)
+    footer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    footer.BorderSizePixel = 0
+    footer.Parent = mainFrame
+    
+    -- Previous button
+    local prevButton = Instance.new("TextButton")
+    prevButton.Size = UDim2.new(0, 40, 0, 40)
+    prevButton.Position = UDim2.new(0, 10, 0, 0)
+    prevButton.Text = "<"
+    prevButton.TextSize = 24
+    prevButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    prevButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    prevButton.BorderSizePixel = 0
+    prevButton.Parent = footer
+    
+    -- Next button
+    local nextButton = Instance.new("TextButton")
+    nextButton.Size = UDim2.new(0, 40, 0, 40)
+    nextButton.Position = UDim2.new(0, 60, 0, 0)
+    nextButton.Text = ">"
+    nextButton.TextSize = 24
+    nextButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    nextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nextButton.BorderSizePixel = 0
+    nextButton.Parent = footer
+    
+    -- Player name label
+    local playerLabel = Instance.new("TextLabel")
+    playerLabel.Size = UDim2.new(1, -120, 1, 0)
+    playerLabel.Position = UDim2.new(0, 110, 0, 0)
+    playerLabel.Text = "No player selected"
+    playerLabel.TextSize = 18
+    playerLabel.BackgroundTransparency = 1
+    playerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    playerLabel.Parent = footer
+    
+    -- Button handlers
+    local function updatePlayerView()
+        local players = Players:GetPlayers()
+        local targetPlayer = players[PlayerView.CurrentIndex]
+        
+        if targetPlayer and targetPlayer.Character then
+            playerLabel.Text = targetPlayer.Name
             
-            -- Set unrestricted zoom distances
-            LocalPlayer.CameraMinZoomDistance = 0
-            LocalPlayer.CameraMaxZoomDistance = 1000
+            -- Clear existing viewport contents
+            for _, child in pairs(viewportFrame:GetChildren()) do
+                if child:IsA("Camera") or child:IsA("Model") then
+                    child:Destroy()
+                end
+            end
             
-            -- Update camera controls if available
-            if Controls and Controls.gamepadZoom then
-                Controls.gamepadZoom:SetMinZoomDistance(0)
-                Controls.gamepadZoom:SetMaxZoomDistance(1000)
+            -- Create new camera
+            local camera = Instance.new("Camera", viewportFrame)
+            viewportFrame.CurrentCamera = camera
+            
+            -- Clone and render character
+            local char = targetPlayer.Character:Clone()
+            char.Parent = viewportFrame
+            
+            -- Position camera to look at character
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                camera.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 2, 10), hrp.Position)
             end
         else
-            -- Restore original zoom values
-            LocalPlayer.CameraMinZoomDistance = originalMinZoom or 0.5
-            LocalPlayer.CameraMaxZoomDistance = originalMaxZoom or 400
-            
-            -- Restore camera controls if available
-            if Controls and Controls.gamepadZoom then
-                Controls.gamepadZoom:SetMinZoomDistance(originalMinZoom or 0.5)
-                Controls.gamepadZoom:SetMaxZoomDistance(originalMaxZoom or 400)
+            playerLabel.Text = "No player selected"
+        end
+    end
+    
+    prevButton.MouseButton1Click:Connect(function()
+        local playerCount = #Players:GetPlayers()
+        PlayerView.CurrentIndex = ((PlayerView.CurrentIndex - 2) % playerCount) + 1
+        updatePlayerView()
+    end)
+    
+    nextButton.MouseButton1Click:Connect(function()
+        local playerCount = #Players:GetPlayers()
+        PlayerView.CurrentIndex = (PlayerView.CurrentIndex % playerCount) + 1
+        updatePlayerView()
+    end)
+    
+    -- Update view connection
+    local updateConnection = RunService.RenderStepped:Connect(function()
+        if PlayerView.Enabled then
+            local targetPlayer = Players:GetPlayers()[PlayerView.CurrentIndex]
+            if targetPlayer and targetPlayer.Character and viewportFrame.CurrentCamera then
+                local char = viewportFrame:FindFirstChildWhichIsA("Model")
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    -- Update character position to match actual player
+                    local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if targetHRP then
+                        hrp.CFrame = targetHRP.CFrame
+                        viewportFrame.CurrentCamera.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 2, 10), hrp.Position)
+                    end
+                else
+                    -- Character was removed, recreate view
+                    updatePlayerView()
+                end
+            end
+        end
+    end)
+    
+    viewportGui.Parent = game.CoreGui
+    return viewportGui, updateConnection
+end
+
+visuals:CreateToggle({
+    text = "Player View",
+    callback = function(state)
+        PlayerView.Enabled = state
+        if state then
+            local viewportGui, updateConnection = createPlayerViewWindow()
+            PlayerView.ViewportGui = viewportGui
+            PlayerView.UpdateConnection = updateConnection
+        else
+            if PlayerView.ViewportGui then
+                PlayerView.ViewportGui:Destroy()
+                PlayerView.ViewportGui = nil
+            end
+            if PlayerView.UpdateConnection then
+                PlayerView.UpdateConnection:Disconnect()
+                PlayerView.UpdateConnection = nil
             end
         end
     end
