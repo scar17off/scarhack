@@ -18,6 +18,7 @@ A Roblox script hub with support for multiple games.
 - [Forsaken](places/18687417158.lua)
 - [Tower of Hell](places/1962086868.lua)
 - [Specter](places/5911084042.lua)
+- [dingus](places/13924946576.lua)
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`
@@ -67,6 +68,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 - Auto collect evidence
 - Van Teleport
 - Sanity and peace time information
+
+### dingus
+- No NPCs
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
