@@ -687,3 +687,28 @@ game:GetService("RunService").Heartbeat:Connect(function()
         end
     end
 end)
+
+-- Waypoint System
+local Waypoint = window:CreateCategory("Waypoint")
+
+local savedWaypoint = nil
+
+Waypoint:CreateButton({
+    text = "Set Waypoint",
+    callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            savedWaypoint = character.HumanoidRootPart.CFrame
+        end
+    end
+})
+
+Waypoint:CreateButton({
+    text = "Teleport to Waypoint",
+    callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") and savedWaypoint then
+            character:PivotTo(savedWaypoint)
+        end
+    end
+})
