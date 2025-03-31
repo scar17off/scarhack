@@ -639,6 +639,55 @@ Teleports:CreateButton({
     end
 })
 
+Teleports:CreateButton({
+    text = "Set Waypoint",
+    callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            savedWaypoint = character.HumanoidRootPart.CFrame
+        end
+    end
+})
+
+Teleports:CreateButton({
+    text = "Teleport to Waypoint",
+    callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") and savedWaypoint then
+            character:PivotTo(savedWaypoint)
+        end
+    end
+})
+
+Teleports:CreateButton({
+    text = "Bone TP",
+    callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            local bone = workspace.Map:FindFirstChild("Bone")
+            if bone then
+                character:PivotTo(bone.CFrame)
+            end
+        end
+    end
+})
+
+Teleports:CreateButton({
+    text = "TP to Ghost",
+    callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            -- Find the ghost in ServerNPCs
+            for _, ghost in ipairs(workspace.ServerNPCs:GetChildren()) do
+                if ghost:IsA("Model") and ghost.PrimaryPart then
+                    character:PivotTo(ghost.PrimaryPart.CFrame)
+                    break
+                end
+            end
+        end
+    end
+})
+
 -- Auto Van
 local autoVanEnabled = false
 local autoVanDistance = 8
@@ -687,28 +736,3 @@ game:GetService("RunService").Heartbeat:Connect(function()
         end
     end
 end)
-
--- Waypoint System
-local Waypoint = window:CreateCategory("Waypoint")
-
-local savedWaypoint = nil
-
-Waypoint:CreateButton({
-    text = "Set Waypoint",
-    callback = function()
-        local character = game.Players.LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            savedWaypoint = character.HumanoidRootPart.CFrame
-        end
-    end
-})
-
-Waypoint:CreateButton({
-    text = "Teleport to Waypoint",
-    callback = function()
-        local character = game.Players.LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") and savedWaypoint then
-            character:PivotTo(savedWaypoint)
-        end
-    end
-})
