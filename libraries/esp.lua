@@ -123,6 +123,13 @@ function ESP:AddObjectListener(parent, options)
         if type(options.Type) == "string" and c:IsA(options.Type) or options.Type == nil then
             if type(options.Name) == "string" and c.Name == options.Name or options.Name == nil then
                 if not options.Validator or options.Validator(c) then
+                    -- Check if this object is already being tracked
+                    local existingBox = self:GetBox(c)
+                    if existingBox then
+                        -- Update the existing box instead of creating a new one
+                        existingBox:Remove()
+                    end
+                    
                     local box = ESP:Add(c, {
                         PrimaryPart = type(options.PrimaryPart) == "string" and c:WaitForChild(options.PrimaryPart) or type(options.PrimaryPart) == "function" and options.PrimaryPart(c),
                         Color = type(options.Color) == "function" and options.Color(c) or options.Color,
@@ -351,7 +358,13 @@ function boxBase:Update()
         -- Set the fill properties
         self.Components.Highlight.FillTransparency = ESP.Glow.Transparency
         self.Components.Highlight.FillColor = fillColor
-        self.Components.Highlight.FillMode = ESP.Glow.Filled and Enum.FillMode.Solid or Enum.FillMode.Outline
+        
+        -- Fix for FillMode error
+        if ESP.Glow.Filled then
+            self.Components.Highlight.FillMode = Enum.FillMode.Solid
+        else
+            self.Components.Highlight.FillMode = Enum.FillMode.Outline
+        end
         
         -- Enable the highlight
         self.Components.Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -582,7 +595,14 @@ function ESP:Add(obj, options)
         box.Components.Highlight.OutlineColor = outlineColor
         box.Components.Highlight.FillTransparency = self.Glow.Transparency
         box.Components.Highlight.FillColor = fillColor
-        box.Components.Highlight.FillMode = self.Glow.Filled and Enum.FillMode.Solid or Enum.FillMode.Outline
+        
+        -- Fix for FillMode error
+        if self.Glow.Filled then
+            box.Components.Highlight.FillMode = Enum.FillMode.Solid
+        else
+            box.Components.Highlight.FillMode = Enum.FillMode.Outline
+        end
+        
         box.Components.Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         box.Components.Highlight.Enabled = true
     end
