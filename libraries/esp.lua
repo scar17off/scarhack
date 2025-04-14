@@ -13,10 +13,14 @@ local ESP = {
     AttachShift = 1,
     TeamMates = true,
     Players = true,
-    Glow = false,
-    GlowColor = Color3.fromRGB(255, 255, 255),
-    GlowTeamColor = false,
-    GlowTransparency = 0.5,
+    Glow = {
+        Enabled = true,
+        Filled = true,
+        FillColor = Color3.fromRGB(255, 0, 0),
+        OutlineColor = Color3.fromRGB(0, 255, 0),
+        TeamColor = false,
+        Transparency = 0.5
+    },
     MaxDistance = 1000,
     Distance = false,
     Tracers = false,
@@ -314,32 +318,38 @@ function boxBase:Update()
         self.Components.Tracer.Visible = false
     end
 
-    if ESP.Glow then
+    if ESP.Glow.Enabled then
         if not self.Components.Highlight then
             self.Components.Highlight = Instance.new("Highlight")
             self.Components.Highlight.Parent = self.Object
         end
         
-        -- Determine glow color based on team settings
-        local glowColor
-        if ESP.GlowTeamColor then
+        -- Determine colors based on team settings
+        local fillColor, outlineColor
+        if ESP.Glow.TeamColor then
             local p = self:GetPlrFromChar(self.Object)
             if p and p.Team then
-                glowColor = p.Team.TeamColor.Color
+                fillColor = p.Team.TeamColor.Color
+                outlineColor = p.Team.TeamColor.Color
             else
-                glowColor = ESP.GlowColor
+                -- If not a player or no team, use the object's color or default colors
+                fillColor = self.Color or ESP.Glow.FillColor
+                outlineColor = self.Color or ESP.Glow.OutlineColor
             end
         else
-            glowColor = ESP.GlowColor
+            -- Use the object's color if available, otherwise use glow colors
+            fillColor = self.Color or ESP.Glow.FillColor
+            outlineColor = self.Color or ESP.Glow.OutlineColor
         end
         
         -- Set the outline to be solid and visible
         self.Components.Highlight.OutlineTransparency = 0
-        self.Components.Highlight.OutlineColor = glowColor
+        self.Components.Highlight.OutlineColor = outlineColor
         
-        -- Set the fill to be more transparent
-        self.Components.Highlight.FillTransparency = ESP.GlowTransparency
-        self.Components.Highlight.FillColor = glowColor
+        -- Set the fill properties
+        self.Components.Highlight.FillTransparency = ESP.Glow.Transparency
+        self.Components.Highlight.FillColor = fillColor
+        self.Components.Highlight.FillMode = ESP.Glow.Filled and Enum.FillMode.Solid or Enum.FillMode.Outline
         
         -- Enable the highlight
         self.Components.Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
