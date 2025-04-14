@@ -73,6 +73,9 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 - No NPCs
 - ESP
 
+### 3008
+- ESP
+
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
 
