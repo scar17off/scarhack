@@ -80,34 +80,23 @@ end)
 
 local GlowToggle = ESPSection:CreateToggle("Glow", false, function(Value)
     ESP_GLOW = Value
-    ESP.Glow = Value
+    ESP.Glow.Enabled = Value
 end)
 
 local GlowColorPicker = ESPSection:CreateColorpicker("Glow Color", Color3.fromRGB(255, 0, 0), function(Value)
     ESP_GLOW_COLOR = Value
-    ESP.GlowColor = Value
+    ESP.Glow.FillColor = Value
+    ESP.Glow.OutlineColor = Value
 end)
 
 local GlowTransparencySlider = ESPSection:CreateSlider("Glow Transparency", 0, 1, 0.5, false, function(Value)
     ESP_GLOW_TRANSPARENCY = Value
-    ESP.GlowTransparency = Value
+    ESP.Glow.Transparency = Value
 end)
 
 local GlowTeamColorToggle = ESPSection:CreateToggle("Team Color Glow", false, function(Value)
     ESP_GLOW_TEAM_COLOR = Value
-    
-    -- Override GetColor for glow if team colors are enabled
-    if Value then
-        ESP.Overrides.GetGlowColor = function(obj)
-            local player = ESP:GetPlrFromChar(obj)
-            if player and player.Team then
-                return player.Team.TeamColor.Color
-            end
-            return ESP.GlowColor
-        end
-    else
-        ESP.Overrides.GetGlowColor = nil
-    end
+    ESP.Glow.TeamColor = Value
 end)
 
 ESP.FaceCamera = true

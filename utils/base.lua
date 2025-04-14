@@ -777,7 +777,7 @@ esp:CreateToggle({
 esp:CreateToggle({
     text = "Glow",
     callback = function(state)
-        ESP.Glow = state
+        ESP.Glow.Enabled = state
     end
 })
 
