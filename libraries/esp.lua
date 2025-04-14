@@ -14,7 +14,7 @@ local ESP = {
     TeamMates = true,
     Players = true,
     Glow = {
-        Enabled = true,
+        Enabled = false,
         Filled = true,
         FillColor = Color3.fromRGB(255, 0, 0),
         OutlineColor = Color3.fromRGB(0, 255, 0),
@@ -105,6 +105,7 @@ function ESP:Toggle(bool)
                         component.Visible = false
                     elseif typeof(component) == "Instance" and component:IsA("Highlight") then
                         component.Enabled = false
+                        component:Destroy()
                     end
                 end
             end
@@ -160,7 +161,8 @@ function boxBase:Remove()
     for i,v in pairs(self.Components) do
         if typeof(v) ~= "Instance" then
             v:Remove()
-        else
+        elseif typeof(v) == "Instance" and v:IsA("Highlight") then
+            v.Enabled = false
             v:Destroy()
         end
         self.Components[i] = nil

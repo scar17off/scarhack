@@ -49,6 +49,14 @@ ESP:CreateToggle({
 })
 
 ESP:CreateToggle({
+    text = "Glow Fill",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Glow.Filled = value
+    end
+})
+
+ESP:CreateToggle({
     text = "Players",
     default = false,
     callback = function(value)
