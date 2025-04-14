@@ -71,6 +71,22 @@ ESP:CreateToggle({
     end
 })
 
+Player:CreateToggle({
+    text = "Players",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Players = value
+    end
+})
+
+ESP:CreateToggle({
+    text = "Glow",
+    default = false,
+    callback = function(value)
+        ESPLibrary.Glow.Enabled = value
+    end
+})
+
 ESP:CreateToggle({
     text = "Ghost",
     default = false,

@@ -44,7 +44,7 @@ ESP:CreateToggle({
     text = "Glow",
     default = false,
     callback = function(value)
-        ESPLibrary.Glow = value
+        ESPLibrary.Glow.Enabled = value
     end
 })
 
