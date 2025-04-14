@@ -474,6 +474,9 @@ function ESP:Add(obj, options)
         return warn(obj, "has no parent")
     end
 
+    -- Generate a unique identifier for the object
+    local uniqueId = obj:GetFullName()
+
     local box = setmetatable({
         Name = options.Name or obj.Name,
         Type = "Box",
@@ -486,7 +489,8 @@ function ESP:Add(obj, options)
         IsEnabled = options.IsEnabled,
         Temporary = options.Temporary,
         ColorDynamic = options.ColorDynamic,
-        RenderInNil = options.RenderInNil
+        RenderInNil = options.RenderInNil,
+        UniqueId = uniqueId
     }, boxBase)
 
     if self:GetBox(obj) then
@@ -545,8 +549,16 @@ function ESP:Add(obj, options)
         Visible = self.Enabled and self.Health.Enabled
     })
 
-    -- Create Highlight component immediately if glow is enabled
-    if self.Glow and self.Glow.Enabled then
+    -- Check if this object should be visible based on IsEnabled
+    local isEnabled = true
+    if type(box.IsEnabled) == "string" then
+        isEnabled = self[box.IsEnabled]
+    elseif type(box.IsEnabled) == "function" then
+        isEnabled = box.IsEnabled(obj)
+    end
+
+    -- Create Highlight component immediately if glow is enabled and object should be visible
+    if self.Glow and self.Glow.Enabled and isEnabled then
         box.Components.Highlight = Instance.new("Highlight")
         box.Components.Highlight.Parent = obj
         
