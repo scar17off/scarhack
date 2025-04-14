@@ -545,6 +545,36 @@ function ESP:Add(obj, options)
         Visible = self.Enabled and self.Health.Enabled
     })
 
+    -- Create Highlight component immediately if glow is enabled
+    if self.Glow and self.Glow.Enabled then
+        box.Components.Highlight = Instance.new("Highlight")
+        box.Components.Highlight.Parent = obj
+        
+        -- Set initial glow properties
+        local fillColor, outlineColor
+        if self.Glow.TeamColor then
+            local p = self:GetPlrFromChar(obj)
+            if p and p.Team then
+                fillColor = p.Team.TeamColor.Color
+                outlineColor = p.Team.TeamColor.Color
+            else
+                fillColor = box.Color or self.Glow.FillColor
+                outlineColor = box.Color or self.Glow.OutlineColor
+            end
+        else
+            fillColor = box.Color or self.Glow.FillColor
+            outlineColor = box.Color or self.Glow.OutlineColor
+        end
+        
+        box.Components.Highlight.OutlineTransparency = 0
+        box.Components.Highlight.OutlineColor = outlineColor
+        box.Components.Highlight.FillTransparency = self.Glow.Transparency
+        box.Components.Highlight.FillColor = fillColor
+        box.Components.Highlight.FillMode = self.Glow.Filled and Enum.FillMode.Solid or Enum.FillMode.Outline
+        box.Components.Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        box.Components.Highlight.Enabled = true
+    end
+
     self.Objects[obj] = box
     
     obj.AncestryChanged:Connect(function(_, parent)
