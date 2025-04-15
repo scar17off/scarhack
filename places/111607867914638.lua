@@ -4,7 +4,7 @@ local window = UI.CreateWindow()
 
 -- ESP listeners
 ESP:AddObjectListener(workspace.Cart, {
-    CustomName = "Money Cart",
+    CustomName = "MoneyCart",
     Name = "MoneyCart",
     Color = Color3.fromRGB(40, 255, 40),
     IsEnabled = "Cart"

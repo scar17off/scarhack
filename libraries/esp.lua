@@ -330,11 +330,12 @@ function boxBase:Update()
     if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
         if not self.Components.Highlight then
             self.Components.Highlight = Instance.new("Highlight")
-            -- For parts, we need to parent the highlight to the part itself
+            -- Create highlight and set its Adornee property
             if self.Object:IsA("BasePart") then
-                self.Components.Highlight.Parent = self.Object
+                self.Components.Highlight.Parent = game
+                self.Components.Highlight.Adornee = self.Object
             else
-                -- For models/characters, parent to the model
+                -- For models/characters, parent directly
                 self.Components.Highlight.Parent = self.Object
             end
         end
