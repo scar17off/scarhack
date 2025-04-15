@@ -327,7 +327,7 @@ function boxBase:Update()
         self.Components.Tracer.Visible = false
     end
 
-    if ESP.Glow and ESP.Glow.Enabled then
+    if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
         if not self.Components.Highlight then
             self.Components.Highlight = Instance.new("Highlight")
             self.Components.Highlight.Parent = self.Object
