@@ -330,7 +330,13 @@ function boxBase:Update()
     if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
         if not self.Components.Highlight then
             self.Components.Highlight = Instance.new("Highlight")
-            self.Components.Highlight.Parent = self.Object
+            -- For parts, we need to parent the highlight to the part itself
+            if self.Object:IsA("BasePart") then
+                self.Components.Highlight.Parent = self.Object
+            else
+                -- For models/characters, parent to the model
+                self.Components.Highlight.Parent = self.Object
+            end
         end
         
         -- Determine colors based on team settings
@@ -356,8 +362,8 @@ function boxBase:Update()
         self.Components.Highlight.OutlineColor = outlineColor
         
         -- Set the fill properties
-        if self.Glow.Filled then
-            self.Components.Highlight.FillTransparency = self.Glow.Transparency
+        if ESP.Glow.Filled then
+            self.Components.Highlight.FillTransparency = ESP.Glow.Transparency
             self.Components.Highlight.FillColor = fillColor
         else
             -- If not filled, make the fill completely transparent

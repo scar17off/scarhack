@@ -1,60 +1,81 @@
-local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local window = UI.CreateWindow()
 
 -- ESP listeners
-ESPLibrary:AddObjectListener(workspace.Cart, {
+ESP:AddObjectListener(workspace.Cart, {
     CustomName = "Money Cart",
     Name = "MoneyCart",
     Color = Color3.fromRGB(40, 255, 40),
     IsEnabled = "Cart"
 })
 
-ESPLibrary:AddObjectListener(workspace["Spawned Loot"], {
-    CustomName = function(obj) return obj.Name end,
+ESP:AddObjectListener(workspace["Spawned Loot"], {
+    CustomName = function(obj)
+        local moneyDisplayText = ""
+        if obj:IsA("Model") then
+            for _, part in ipairs(obj:GetDescendants()) do
+                if part:FindFirstChild("MoneyDisplay") and part.MoneyDisplay:FindFirstChild("TextLabel") then
+                    moneyDisplayText = part.MoneyDisplay.TextLabel.Text
+                    break
+                end
+            end
+        else
+            moneyDisplayText = obj.MoneyDisplay.TextLabel.Text
+        end
+        return obj.Name .. " (" .. moneyDisplayText .. ")"
+    end,
     Color = Color3.fromRGB(255, 40, 255),
     IsEnabled = "Loot"
 })
 
 -- UI category
-local ESP = window:CreateCategory("ESP")
+local ESPCategory = window:CreateCategory("ESP")
 
-ESP:CreateToggle({
+ESPCategory:CreateToggle({
     text = "ESP",
     default = false,
     callback = function(value)
-        ESPLibrary:Toggle(value)
+        ESP:Toggle(value)
     end
 })
 
-ESP:CreateToggle({
+ESPCategory:CreateToggle({
+    text = "Names",
+    default = false,
+    callback = function(value)
+        ESP.Names = value
+    end
+})
+
+ESPCategory:CreateToggle({
     text = "Boxes",
     default = false,
     callback = function(value)
-        ESPLibrary.Boxes = value
+        ESP.Boxes = value
     end
 })
 
-ESP:CreateToggle({
+ESPCategory:CreateToggle({
     text = "Glow",
     default = false,
     callback = function(value)
-        ESPLibrary.Glow = value
+        ESP.Glow = value
     end
 })
 
-ESP:CreateToggle({
+ESPCategory:CreateToggle({
     text = "Money Cart",
     default = false,
     callback = function(value)
-        ESPLibrary.MoneyCart = value
+        ESP.MoneyCart = value
     end
 })
 
-ESP:CreateToggle({
+ESPCategory:CreateToggle({
     text = "Loot",
     default = false,
     callback = function(value)
-        ESPLibrary.Loot = value
+        ESP.Loot = value
     end
 })
