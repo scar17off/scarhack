@@ -6,13 +6,13 @@ local ESP = window:CreateCategory("ESP")
 
 ESPLibrary:AddObjectListener(workspace.GameObjects.Physical.Employees, {
     CustomName = function(obj) return obj.Name end,
-    Color = Color3.fromRGB(255, 255, 0),
+    Color = Color3.fromRGB(255, 40, 40),
     IsEnabled = "Employees"
 })
 
 ESPLibrary:AddObjectListener(workspace.GameObjects.Physical.Items, {
     CustomName = function(obj) return obj.Name end,
-    Color = Color3.fromRGB(255, 255, 0),
+    Color = Color3.fromRGB(0, 255, 0),
     IsEnabled = "Items"
 })
 

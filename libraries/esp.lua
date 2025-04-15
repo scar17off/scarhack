@@ -356,14 +356,12 @@ function boxBase:Update()
         self.Components.Highlight.OutlineColor = outlineColor
         
         -- Set the fill properties
-        self.Components.Highlight.FillTransparency = ESP.Glow.Transparency
-        self.Components.Highlight.FillColor = fillColor
-        
-        -- Fix for FillMode error
-        if ESP.Glow.Filled then
-            self.Components.Highlight.FillMode = Enum.FillMode.Solid
+        if self.Glow.Filled then
+            self.Components.Highlight.FillTransparency = self.Glow.Transparency
+            self.Components.Highlight.FillColor = fillColor
         else
-            self.Components.Highlight.FillMode = Enum.FillMode.Outline
+            -- If not filled, make the fill completely transparent
+            self.Components.Highlight.FillTransparency = 1
         end
         
         -- Enable the highlight
@@ -593,14 +591,14 @@ function ESP:Add(obj, options)
         
         box.Components.Highlight.OutlineTransparency = 0
         box.Components.Highlight.OutlineColor = outlineColor
-        box.Components.Highlight.FillTransparency = self.Glow.Transparency
-        box.Components.Highlight.FillColor = fillColor
         
-        -- Fix for FillMode error
+        -- Set the fill properties
         if self.Glow.Filled then
-            box.Components.Highlight.FillMode = Enum.FillMode.Solid
+            box.Components.Highlight.FillTransparency = self.Glow.Transparency
+            box.Components.Highlight.FillColor = fillColor
         else
-            box.Components.Highlight.FillMode = Enum.FillMode.Outline
+            -- If not filled, make the fill completely transparent
+            box.Components.Highlight.FillTransparency = 1
         end
         
         box.Components.Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
