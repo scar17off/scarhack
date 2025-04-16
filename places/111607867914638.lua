@@ -312,6 +312,41 @@ VisualCategory:CreateToggle({
     end
 })
 
+-- Fullbright
+local Lighting = game:GetService("Lighting")
+local originalAmbient = Lighting.Ambient
+local originalBrightness = Lighting.Brightness
+local originalClockTime = Lighting.ClockTime
+local originalFogEnd = Lighting.FogEnd
+local originalGlobalShadows = Lighting.GlobalShadows
+
+visuals:CreateToggle({
+    text = "Fullbright",
+    callback = function(enabled)
+        if enabled then
+            -- Store original lighting values and apply fullbright
+            originalAmbient = Lighting.Ambient
+            originalBrightness = Lighting.Brightness
+            originalClockTime = Lighting.ClockTime
+            originalFogEnd = Lighting.FogEnd
+            originalGlobalShadows = Lighting.GlobalShadows
+
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+        else
+            -- Restore original lighting values
+            Lighting.Ambient = originalAmbient
+            Lighting.Brightness = originalBrightness
+            Lighting.ClockTime = originalClockTime
+            Lighting.FogEnd = originalFogEnd
+            Lighting.GlobalShadows = originalGlobalShadows
+        end
+    end
+})
+
 -- No Fog
 local originalFogStart = Lighting.FogStart
 local originalFogEnd = Lighting.FogEnd
