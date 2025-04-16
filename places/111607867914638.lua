@@ -2,6 +2,13 @@ local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local window = UI.CreateWindow()
 
+-- Store previous positions for teleports
+local previousPositions = {
+    cart = nil,
+    loot = nil,
+    bestLoot = nil
+}
+
 -- Function to check if a position is near the cart
 local function isNearCart(position, maxDistance)
     maxDistance = maxDistance or 15 -- Default distance of 15 studs
@@ -112,12 +119,6 @@ ESPCategory:CreateToggle({
     end
 })
 
--- Store previous positions for teleports
-local previousPositions = {
-    cart = nil,
-    loot = nil
-}
-
 ESPCategory:CreateButton({
     text = "Cart TP",
     callback = function()
@@ -202,6 +203,75 @@ ESPCategory:CreateButton({
         if previousPositions.loot then
             humanoidRootPart.CFrame = previousPositions.loot
             previousPositions.loot = nil
+        end
+    end
+})
+
+local function getLootValue(obj)
+    local moneyDisplayText = ""
+    if obj:IsA("Model") then
+        for _, part in ipairs(obj:GetDescendants()) do
+            if part:FindFirstChild("MoneyDisplay") and part.MoneyDisplay:FindFirstChild("TextLabel") then
+                moneyDisplayText = part.MoneyDisplay.TextLabel.Text
+                break
+            end
+        end
+    else
+        if obj:FindFirstChild("MoneyDisplay") and obj.MoneyDisplay:FindFirstChild("TextLabel") then
+            moneyDisplayText = obj.MoneyDisplay.TextLabel.Text
+        end
+    end
+    
+    -- Convert money text to number (remove "$" and "," characters)
+    local numberStr = moneyDisplayText:gsub("%$", ""):gsub(",", "")
+    return tonumber(numberStr) or 0
+end
+
+ESPCategory:CreateButton({
+    text = "Teleport to Best Loot",
+    callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        -- Store current position before teleporting
+        previousPositions.bestLoot = humanoidRootPart.CFrame
+        
+        local bestLoot = nil
+        local highestValue = 0
+        
+        for _, loot in ipairs(workspace["Spawned Loot"]:GetChildren()) do
+            local primaryPart = loot:IsA("Model") and loot.PrimaryPart or loot
+            if primaryPart and not isNearCart(primaryPart.Position) then
+                local value = getLootValue(loot)
+                if value > highestValue then
+                    highestValue = value
+                    bestLoot = primaryPart
+                end
+            end
+        end
+        
+        if bestLoot then
+            -- Teleport above the loot
+            humanoidRootPart.CFrame = bestLoot.CFrame + Vector3.new(0, 5, 0)
+        end
+    end
+})
+
+ESPCategory:CreateButton({
+    text = "Return from Best Loot",
+    callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        if previousPositions.bestLoot then
+            humanoidRootPart.CFrame = previousPositions.bestLoot
+            previousPositions.bestLoot = nil
         end
     end
 })
