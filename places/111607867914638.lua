@@ -1,5 +1,6 @@
 local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
+local Players = game:GetService("Players")
 local window = UI.CreateWindow()
 
 -- Store previous positions for teleports
@@ -9,7 +10,6 @@ local previousPositions = {
     bestLoot = nil
 }
 
--- Function to check if a position is near the cart
 local function isNearCart(position, maxDistance)
     maxDistance = maxDistance or 15 -- Default distance of 15 studs
     local cart = workspace.Cart:FindFirstChild("MoneyCart")
@@ -272,6 +272,42 @@ ESPCategory:CreateButton({
         if previousPositions.bestLoot then
             humanoidRootPart.CFrame = previousPositions.bestLoot
             previousPositions.bestLoot = nil
+        end
+    end
+})
+
+-- Visual Effects category
+local VisualCategory = window:CreateCategory("Visual Effects")
+
+VisualCategory:CreateToggle({
+    text = "No Pixelization",
+    default = false,
+    callback = function(value)
+        local pixelsEffect = Players.LocalPlayer.PlayerGui:FindFirstChild("Pixels Effect")
+        if pixelsEffect then
+            pixelsEffect.Enabled = not value
+        end
+    end
+})
+
+VisualCategory:CreateToggle({
+    text = "No VHS",
+    default = false,
+    callback = function(value)
+        local vhsEffect = Players.LocalPlayer.PlayerGui:FindFirstChild("VHS_effect")
+        if vhsEffect then
+            vhsEffect.Enabled = not value
+        end
+    end
+})
+
+VisualCategory:CreateToggle({
+    text = "No Vignette",
+    default = false,
+    callback = function(value)
+        local vignetteEffect = Players.LocalPlayer.PlayerGui:FindFirstChild("Vignette Effect")
+        if vignetteEffect then
+            vignetteEffect.Enabled = not value
         end
     end
 })
