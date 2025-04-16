@@ -2,6 +2,16 @@ local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local window = UI.CreateWindow()
 
+-- Function to check if a position is near the cart
+local function isNearCart(position, maxDistance)
+    maxDistance = maxDistance or 15 -- Default distance of 15 studs
+    local cart = workspace.Cart:FindFirstChild("MoneyCart")
+    if cart and cart.PrimaryPart then
+        return (cart.PrimaryPart.Position - position).Magnitude <= maxDistance
+    end
+    return false
+end
+
 -- ESP listeners
 ESP:AddObjectListener(workspace.Cart, {
     Name = "MoneyCart",
@@ -27,7 +37,12 @@ ESP:AddObjectListener(workspace["Spawned Loot"], {
         return obj.Name .. " (" .. moneyDisplayText .. ")"
     end,
     Color = Color3.fromRGB(255, 40, 255),
-    IsEnabled = "Loot"
+    IsEnabled = function(obj)
+        -- Get the position of the loot
+        local pos = obj:IsA("Model") and (obj.PrimaryPart and obj.PrimaryPart.Position or obj:GetModelCFrame().Position) or obj.Position
+        -- Only show ESP if the loot is not near the cart
+        return ESP.Loot and not isNearCart(pos)
+    end
 })
 
 ESP:AddObjectListener(workspace["Spawned Enemies"], {
@@ -151,17 +166,20 @@ ESPCategory:CreateButton({
         for _, loot in ipairs(workspace["Spawned Loot"]:GetChildren()) do
             local primaryPart = loot:IsA("Model") and loot.PrimaryPart or loot
             if primaryPart then
-                local distance = (primaryPart.Position - humanoidRootPart.Position).Magnitude
-                if distance < closestDistance then
-                    closestDistance = distance
-                    closestLoot = primaryPart
+                -- Only consider loot that's not near the cart
+                if not isNearCart(primaryPart.Position) then
+                    local distance = (primaryPart.Position - humanoidRootPart.Position).Magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestLoot = primaryPart
+                    end
                 end
             end
         end
         
         if closestLoot then
             -- Teleport above the loot
-            humanoidRootPart.CFrame = closestLoot.CFrame + Vector3.new(0, 3, 0)
+            humanoidRootPart.CFrame = closestLoot.CFrame + Vector3.new(0, 5, 0)
         end
     end
 })
