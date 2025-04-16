@@ -4,10 +4,11 @@ local window = UI.CreateWindow()
 
 -- ESP listeners
 ESP:AddObjectListener(workspace.Cart, {
-    CustomName = "MoneyCart",
     Name = "MoneyCart",
+    CustomName = "Money Cart",
     Color = Color3.fromRGB(40, 255, 40),
-    IsEnabled = "Cart"
+    IsEnabled = "Cart",
+    RenderInNil = true
 })
 
 ESP:AddObjectListener(workspace["Spawned Loot"], {
@@ -27,6 +28,14 @@ ESP:AddObjectListener(workspace["Spawned Loot"], {
     end,
     Color = Color3.fromRGB(255, 40, 255),
     IsEnabled = "Loot"
+})
+
+ESP:AddObjectListener(workspace["Spawned Enemies"], {
+    CustomName = function(obj)
+        return obj.Name
+    end,
+    Color = Color3.fromRGB(255, 0, 0),
+    IsEnabled = "Entities"
 })
 
 -- UI category
@@ -77,5 +86,82 @@ ESPCategory:CreateToggle({
     default = false,
     callback = function(value)
         ESP.Loot = value
+    end
+})
+
+ESPCategory:CreateToggle({
+    text = "Entities",
+    default = false,
+    callback = function(value)
+        ESP.Entities = value
+    end
+})
+
+-- Store previous position for return teleport
+local previousPosition = nil
+
+ESPCategory:CreateButton({
+    text = "Cart TP",
+    callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        -- Store current position before teleporting
+        previousPosition = humanoidRootPart.CFrame
+        
+        -- Find and teleport to cart
+        local cart = workspace.Cart:FindFirstChild("MoneyCart")
+        if cart and cart.PrimaryPart then
+            humanoidRootPart.CFrame = cart.PrimaryPart.CFrame + Vector3.new(0, 5, 0)
+        end
+    end
+})
+
+ESPCategory:CreateButton({
+    text = "Return to Previous",
+    callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        if previousPosition then
+            humanoidRootPart.CFrame = previousPosition
+            previousPosition = nil
+        end
+    end
+})
+
+ESPCategory:CreateButton({
+    text = "Teleport to Closest Loot",
+    callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        local closestLoot = nil
+        local closestDistance = math.huge
+        
+        for _, loot in ipairs(workspace["Spawned Loot"]:GetChildren()) do
+            local primaryPart = loot:IsA("Model") and loot.PrimaryPart or loot
+            if primaryPart then
+                local distance = (primaryPart.Position - humanoidRootPart.Position).Magnitude
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestLoot = primaryPart
+                end
+            end
+        end
+        
+        if closestLoot then
+            -- Teleport above the loot
+            humanoidRootPart.CFrame = closestLoot.CFrame + Vector3.new(0, 3, 0)
+        end
     end
 })
