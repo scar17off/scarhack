@@ -112,8 +112,11 @@ ESPCategory:CreateToggle({
     end
 })
 
--- Store previous position for return teleport
-local previousPosition = nil
+-- Store previous positions for teleports
+local previousPositions = {
+    cart = nil,
+    loot = nil
+}
 
 ESPCategory:CreateButton({
     text = "Cart TP",
@@ -125,7 +128,7 @@ ESPCategory:CreateButton({
         if not humanoidRootPart then return end
         
         -- Store current position before teleporting
-        previousPosition = humanoidRootPart.CFrame
+        previousPositions.cart = humanoidRootPart.CFrame
         
         -- Find and teleport to cart
         local cart = workspace.Cart:FindFirstChild("MoneyCart")
@@ -136,7 +139,7 @@ ESPCategory:CreateButton({
 })
 
 ESPCategory:CreateButton({
-    text = "Return to Previous",
+    text = "Return from Cart",
     callback = function()
         local player = game.Players.LocalPlayer
         local character = player.Character
@@ -144,9 +147,9 @@ ESPCategory:CreateButton({
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
         if not humanoidRootPart then return end
         
-        if previousPosition then
-            humanoidRootPart.CFrame = previousPosition
-            previousPosition = nil
+        if previousPositions.cart then
+            humanoidRootPart.CFrame = previousPositions.cart
+            previousPositions.cart = nil
         end
     end
 })
@@ -159,6 +162,9 @@ ESPCategory:CreateButton({
         if not character then return end
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
         if not humanoidRootPart then return end
+        
+        -- Store current position before teleporting
+        previousPositions.loot = humanoidRootPart.CFrame
         
         local closestLoot = nil
         local closestDistance = math.huge
@@ -180,6 +186,22 @@ ESPCategory:CreateButton({
         if closestLoot then
             -- Teleport above the loot
             humanoidRootPart.CFrame = closestLoot.CFrame + Vector3.new(0, 5, 0)
+        end
+    end
+})
+
+ESPCategory:CreateButton({
+    text = "Return from Loot",
+    callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        if previousPositions.loot then
+            humanoidRootPart.CFrame = previousPositions.loot
+            previousPositions.loot = nil
         end
     end
 })
