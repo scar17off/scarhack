@@ -533,16 +533,18 @@ function ESP:Add(obj, options)
         Color = box.Color,
         Center = true,
         Outline = true,
-        Size = 19,
-        Visible = self.Enabled and self.Names
+        Size = 35,
+        Visible = self.Enabled and self.Names,
+        Transparency = 1
     })
 
     box.Components["Distance"] = Drawing.new("Text", {
         Color = box.Color,
         Center = true,
         Outline = true,
-        Size = 19,
-        Visible = self.Enabled and self.Names
+        Size = 35,
+        Visible = self.Enabled and self.Distance,
+        Transparency = 1
     })
     
     box.Components["Tracer"] = Drawing.new("Line", {
