@@ -35,12 +35,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 
 ### Arsenal
 - ESP
-  - Boxes
-  - Names
-  - Tracers
-  - Team Colors
-  - Glow Effect
-  - Distance Display
 - Aimbot
   - FOV Circle
   - Smoothness Adjustment
@@ -75,6 +69,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 
 ### 3008
 - ESP
+
+### E.R.P.O
+- ESP
+- Teleports
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
