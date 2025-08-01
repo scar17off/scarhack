@@ -207,7 +207,8 @@ function boxBase:Update()
         return
     end
 
-    local color = self.Color or self.ColorDynamic and self:ColorDynamic() or ESP:GetColor(self.Object) or ESP.Color
+    -- Always get the latest color for team color support
+    local color = self.ColorDynamic and self:ColorDynamic() or ESP:GetColor(self.Object) or ESP.Color
 
     --calculations--
     local cf = self.PrimaryPart.CFrame
@@ -334,7 +335,7 @@ function boxBase:Update()
         self.Components.Tracer.Visible = false
     end
 
-        if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
+    if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
         -- Always ensure Highlight exists if Glow is enabled and ESP is enabled
         if not self.Components.Highlight or not self.Components.Highlight.Parent then
             if self.Components.Highlight then
@@ -356,12 +357,12 @@ function boxBase:Update()
                 fillColor = p.Team.TeamColor.Color
                 outlineColor = p.Team.TeamColor.Color
             else
-                fillColor = self.Color or ESP.Glow.FillColor
-                outlineColor = self.Color or ESP.Glow.OutlineColor
+                fillColor = color or ESP.Glow.FillColor
+                outlineColor = color or ESP.Glow.OutlineColor
             end
         else
-            fillColor = self.Color or ESP.Glow.FillColor
-            outlineColor = self.Color or ESP.Glow.OutlineColor
+            fillColor = color or ESP.Glow.FillColor
+            outlineColor = color or ESP.Glow.OutlineColor
         end
 
         self.Components.Highlight.OutlineTransparency = 0
@@ -664,6 +665,7 @@ local function CharAdded(char)
         })
     end
 end
+
 local function PlayerAdded(p)
     p.CharacterAdded:Connect(CharAdded)
     if p.Character then
