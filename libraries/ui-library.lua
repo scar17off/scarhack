@@ -129,20 +129,19 @@ function UI.CreateWindow()
             ToggleButton.MouseButton2Click:Connect(function()
                 settingsOpen = not settingsOpen
                 SettingsHolder.Visible = settingsOpen
-                
-                -- Calculate the height of settings (remove extra spacing)
+
+                -- Calculate the height of settings and position each child correctly
                 local settingsHeight = 0
                 for _, child in pairs(SettingsHolder:GetChildren()) do
-                    if child:IsA("Frame") then  -- Count only the actual setting holders
+                    if child:IsA("Frame") then
+                        child.Position = UDim2.new(0, 0, 0, settingsHeight)
                         settingsHeight = settingsHeight + child.Size.Y.Offset
-                        -- Position each settings element directly after the previous one
-                        child.Position = UDim2.new(0, 0, 0, settingsHeight - child.Size.Y.Offset)
                     end
                 end
-                
+
                 -- Update settings size
                 SettingsHolder.Size = UDim2.new(1, 0, 0, settingsOpen and settingsHeight or 0)
-                
+
                 -- Update positions of all buttons and their settings
                 local currentOffset = 0
                 for _, child in pairs(ModuleHolder:GetChildren()) do
@@ -150,7 +149,7 @@ function UI.CreateWindow()
                         -- Position the button
                         child.Position = UDim2.new(0, 0, 0, currentOffset)
                         currentOffset = currentOffset + 20
-                        
+
                         -- Find and position its settings holder
                         local settingsHolder = ModuleHolder:FindFirstChild("Settings_" .. child.Name)
                         if settingsHolder then

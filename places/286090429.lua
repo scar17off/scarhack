@@ -284,16 +284,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Add keybind to the toggle
-GuiToggle:CreateKeybind("RightShift", function()
-    local guiWindow = game:GetService("CoreGui"):FindFirstChild("ScarHack")
-    if guiWindow then
-        local newState = not guiWindow.Main.Visible
-        GuiToggle:SetState(newState)
-        Window:Toggle(newState)
-    end
-end)
-
 -- Player death handler for random hitbox
 game.Players.PlayerRemoving:Connect(function(player)
     PlayerHitboxes[player] = nil
@@ -388,7 +378,7 @@ VisualTab:CreateColorpicker("Glow Color", Color3.fromRGB(255, 0, 0), function(Va
     ESP.Glow.OutlineColor = Value
 end)
 
-GlowToggle:AddSlider({
+VisualTab:CreateSlider({
     text = "Glow Transparency",
     min = 0,
     max = 1,
@@ -406,9 +396,7 @@ VisualTab:CreateToggle({
     end
 })
 
-ESP.FaceCamera = true
 ESP:Toggle(false)
-ESP.Players = true
 
 VisualTab:CreateToggle({
     text = "Show Distance",
@@ -464,7 +452,7 @@ local DarkmodeToggle = VisualTab:CreateToggle({
     end
 })
 
-DarkmodeToggle:CreateSlider({
+DarkmodeToggle:AddSlider({
     text = "Darkness %",
     min = 1,
     max = 100,
