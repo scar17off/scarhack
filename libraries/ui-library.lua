@@ -225,7 +225,6 @@ function UI.CreateWindow()
                 local min = sliderConfig.min or 0
                 local max = sliderConfig.max or 100
                 local current = sliderConfig.default or 50
-                local defaultValue = sliderConfig.defaultValue or current
                 
                 local function updateSlider(input)
                     local pos = math.clamp((input.Position.X - SliderButton.AbsolutePosition.X) / SliderButton.AbsoluteSize.X, 0, 1)
@@ -233,26 +232,8 @@ function UI.CreateWindow()
                     current = value
                     SliderFill.Size = UDim2.new(pos, 0, 1, 0)
                     ValueLabel.Text = tostring(value)
-                    if sliderConfig.callback and enabled then
+                    if sliderConfig.callback then
                         sliderConfig.callback(value)
-                    end
-                end
-                
-                -- Update the toggle callback to handle value changes
-                local originalCallback = toggleConfig.callback
-                toggleConfig.callback = function(state)
-                    enabled = state
-                    if state then
-                        if sliderConfig.callback then
-                            sliderConfig.callback(current)
-                        end
-                    else
-                        if sliderConfig.onDisable then
-                            sliderConfig.onDisable(defaultValue)
-                        end
-                    end
-                    if originalCallback then
-                        originalCallback(state)
                     end
                 end
                 
@@ -395,6 +376,84 @@ function UI.CreateWindow()
                         originalCallback(state)
                     end
                 end
+            end
+            
+            function Toggle:CreateKeybind(defaultKey, callback)
+                local key = defaultKey or "F"
+                local KeybindHolder = Instance.new("Frame")
+                local KeybindLabel = Instance.new("TextLabel")
+                local KeybindButton = Instance.new("TextButton")
+
+                KeybindHolder.Name = "Keybind_" .. (toggleConfig.text or "")
+                KeybindHolder.Parent = SettingsHolder
+                KeybindHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                KeybindHolder.BorderSizePixel = 0
+                KeybindHolder.Size = UDim2.new(1, 0, 0, 28)
+                KeybindHolder.Position = UDim2.new(0, 0, 0, #SettingsHolder:GetChildren() * 28)
+                KeybindHolder.ZIndex = 3
+
+                KeybindLabel.Name = "Label"
+                KeybindLabel.Parent = KeybindHolder
+                KeybindLabel.BackgroundTransparency = 1
+                KeybindLabel.Position = UDim2.new(0, 8, 0, 0)
+                KeybindLabel.Size = UDim2.new(1, -60, 1, 0)
+                KeybindLabel.Font = Enum.Font.SourceSans
+                KeybindLabel.Text = "Keybind"
+                KeybindLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+                KeybindLabel.TextSize = 14
+                KeybindLabel.TextXAlignment = Enum.TextXAlignment.Left
+                KeybindLabel.ZIndex = 3
+
+                KeybindButton.Name = "KeybindButton"
+                KeybindButton.Parent = KeybindHolder
+                KeybindButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                KeybindButton.BorderSizePixel = 0
+                KeybindButton.Position = UDim2.new(1, -46, 0.5, -10)
+                KeybindButton.Size = UDim2.new(0, 38, 0, 20)
+                KeybindButton.Font = Enum.Font.SourceSans
+                KeybindButton.Text = tostring(key)
+                KeybindButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+                KeybindButton.TextSize = 14
+                KeybindButton.ZIndex = 3
+
+                local listening = false
+
+                KeybindButton.MouseButton1Click:Connect(function()
+                    KeybindButton.Text = "..."
+                    listening = true
+                end)
+
+                local inputConn
+                inputConn = UserInputService.InputBegan:Connect(function(input, processed)
+                    if listening and not processed then
+                        if input.UserInputType == Enum.UserInputType.Keyboard then
+                            key = input.KeyCode.Name
+                            KeybindButton.Text = key
+                            listening = false
+                            if callback then
+                                callback(key)
+                            end
+                        end
+                    elseif not listening and input.KeyCode.Name == key then
+                        -- Toggle the button if key is pressed
+                        ToggleButton:MouseButton1Click()
+                    end
+                end)
+
+                -- Optional: Clean up connection if needed
+                KeybindButton.AncestryChanged:Connect(function(_, parent)
+                    if not parent and inputConn then
+                        inputConn:Disconnect()
+                    end
+                end)
+
+                -- Allow programmatic keybind set
+                function Toggle:SetKeybind(newKey)
+                    key = newKey
+                    KeybindButton.Text = tostring(key)
+                end
+
+                return KeybindButton
             end
             
             return Toggle
@@ -549,6 +608,445 @@ function UI.CreateWindow()
             return TextboxInput
         end
         
+        function Category:CreateDropdown(text, options, callback, default)
+            local Dropdown = {}
+            local selected = default or options[1]
+            local isOpen = false
+
+            local DropdownHolder = Instance.new("Frame")
+            DropdownHolder.Name = text
+            DropdownHolder.Parent = ModuleHolder
+            DropdownHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            DropdownHolder.BackgroundTransparency = 0.3
+            DropdownHolder.Size = UDim2.new(1, 0, 0, 24)
+            DropdownHolder.BorderSizePixel = 0
+
+            -- Position based on number of existing elements
+            local elementCount = 0
+            for _, child in pairs(ModuleHolder:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("TextButton") or child:IsA("TextLabel") then
+                    elementCount = elementCount + 1
+                end
+            end
+            DropdownHolder.Position = UDim2.new(0, 0, 0, (elementCount - 1) * 20)
+
+            local DropdownLabel = Instance.new("TextLabel")
+            DropdownLabel.Name = "Label"
+            DropdownLabel.Parent = DropdownHolder
+            DropdownLabel.BackgroundTransparency = 1
+            DropdownLabel.Position = UDim2.new(0, 8, 0, 0)
+            DropdownLabel.Size = UDim2.new(1, -32, 1, 0)
+            DropdownLabel.Font = Enum.Font.SourceSans
+            DropdownLabel.Text = text .. ": " .. tostring(selected)
+            DropdownLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            DropdownLabel.TextSize = 14
+            DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+            local DropdownButton = Instance.new("TextButton")
+            DropdownButton.Name = "DropdownButton"
+            DropdownButton.Parent = DropdownHolder
+            DropdownButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            DropdownButton.BorderSizePixel = 0
+            DropdownButton.Position = UDim2.new(1, -24, 0, 2)
+            DropdownButton.Size = UDim2.new(0, 20, 0, 20)
+            DropdownButton.Font = Enum.Font.SourceSans
+            DropdownButton.Text = "▼"
+            DropdownButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+            DropdownButton.TextSize = 14
+            DropdownButton.ZIndex = 2
+
+            local OptionsFrame = Instance.new("Frame")
+            OptionsFrame.Name = "Options"
+            OptionsFrame.Parent = DropdownHolder
+            OptionsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            OptionsFrame.BorderSizePixel = 0
+            OptionsFrame.Position = UDim2.new(0, 0, 1, 0)
+            OptionsFrame.Size = UDim2.new(1, 0, 0, #options * 20)
+            OptionsFrame.Visible = false
+            OptionsFrame.ZIndex = 3
+
+            -- Add option buttons
+            for i, option in ipairs(options) do
+                local OptionButton = Instance.new("TextButton")
+                OptionButton.Name = tostring(option)
+                OptionButton.Parent = OptionsFrame
+                OptionButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                OptionButton.BorderSizePixel = 0
+                OptionButton.Position = UDim2.new(0, 0, 0, (i - 1) * 20)
+                OptionButton.Size = UDim2.new(1, 0, 0, 20)
+                OptionButton.Font = Enum.Font.SourceSans
+                OptionButton.Text = tostring(option)
+                OptionButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+                OptionButton.TextSize = 14
+                OptionButton.ZIndex = 4
+
+                OptionButton.MouseButton1Click:Connect(function()
+                    selected = option
+                    DropdownLabel.Text = text .. ": " .. tostring(selected)
+                    OptionsFrame.Visible = false
+                    isOpen = false
+                    if callback then
+                        callback(selected)
+                    end
+                end)
+            end
+
+            DropdownButton.MouseButton1Click:Connect(function()
+                isOpen = not isOpen
+                OptionsFrame.Visible = isOpen
+            end)
+
+            -- Hide dropdown if user clicks elsewhere
+            game:GetService("UserInputService").InputBegan:Connect(function(input)
+                if isOpen and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    local mouse = game:GetService("UserInputService"):GetMouseLocation()
+                    local absPos = OptionsFrame.AbsolutePosition
+                    local absSize = OptionsFrame.AbsoluteSize
+                    if not (mouse.X >= absPos.X and mouse.X <= absPos.X + absSize.X and mouse.Y >= absPos.Y and mouse.Y <= absPos.Y + absSize.Y) then
+                        OptionsFrame.Visible = false
+                        isOpen = false
+                    end
+                end
+            end)
+
+            function Dropdown:GetSelected()
+                return selected
+            end
+
+            function Dropdown:SetSelected(val)
+                selected = val
+                DropdownLabel.Text = text .. ": " .. tostring(selected)
+                if callback then
+                    callback(selected)
+                end
+            end
+
+            return Dropdown
+        end
+
+        function Category:CreateSlider(sliderConfig)
+            local Slider = {}
+            local SliderHolder = Instance.new("Frame")
+            local SliderLabel = Instance.new("TextLabel")
+            local SliderButton = Instance.new("TextButton")
+            local SliderFill = Instance.new("Frame")
+            local ValueLabel = Instance.new("TextLabel")
+
+            SliderHolder.Name = sliderConfig.text
+            SliderHolder.Parent = ModuleHolder
+            SliderHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            SliderHolder.BorderSizePixel = 0
+            SliderHolder.Size = UDim2.new(1, 0, 0, 35)
+            -- Position based on number of elements
+            local elementCount = 0
+            for _, child in pairs(ModuleHolder:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("TextButton") or child:IsA("TextLabel") then
+                    elementCount = elementCount + 1
+                end
+            end
+            SliderHolder.Position = UDim2.new(0, 0, 0, (elementCount - 1) * 20)
+            SliderHolder.ZIndex = 3
+
+            SliderLabel.Name = "Label"
+            SliderLabel.Parent = SliderHolder
+            SliderLabel.BackgroundTransparency = 1
+            SliderLabel.Position = UDim2.new(0, 8, 0, 0)
+            SliderLabel.Size = UDim2.new(1, -50, 0, 20)
+            SliderLabel.Font = Enum.Font.SourceSans
+            SliderLabel.Text = sliderConfig.text
+            SliderLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            SliderLabel.TextSize = 14
+            SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+            SliderLabel.ZIndex = 3
+
+            ValueLabel.Name = "Value"
+            ValueLabel.Parent = SliderHolder
+            ValueLabel.BackgroundTransparency = 1
+            ValueLabel.Position = UDim2.new(1, -42, 0, 0)
+            ValueLabel.Size = UDim2.new(0, 34, 0, 20)
+            ValueLabel.Font = Enum.Font.SourceSans
+            ValueLabel.Text = tostring(sliderConfig.default or 50)
+            ValueLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            ValueLabel.TextSize = 14
+            ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+            ValueLabel.ZIndex = 3
+
+            SliderButton.Name = "SliderButton"
+            SliderButton.Parent = SliderHolder
+            SliderButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            SliderButton.BorderSizePixel = 0
+            SliderButton.Position = UDim2.new(0, 8, 0, 25)
+            SliderButton.Size = UDim2.new(1, -16, 0, 4)
+            SliderButton.Text = ""
+            SliderButton.AutoButtonColor = false
+            SliderButton.ZIndex = 3
+
+            SliderFill.Name = "Fill"
+            SliderFill.Parent = SliderButton
+            SliderFill.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+            SliderFill.BorderSizePixel = 0
+            SliderFill.Size = UDim2.new(0.5, 0, 1, 0)
+            SliderFill.ZIndex = 3
+
+            local min = sliderConfig.min or 0
+            local max = sliderConfig.max or 100
+            local current = sliderConfig.default or 50
+
+            local function updateSlider(input)
+                local pos = math.clamp((input.Position.X - SliderButton.AbsolutePosition.X) / SliderButton.AbsoluteSize.X, 0, 1)
+                local value = math.floor(min + (max - min) * pos)
+                current = value
+                SliderFill.Size = UDim2.new(pos, 0, 1, 0)
+                ValueLabel.Text = tostring(value)
+                if sliderConfig.callback then
+                    sliderConfig.callback(value)
+                end
+            end
+
+            SliderButton.MouseButton1Down:Connect(function()
+                local connection
+                connection = UserInputService.InputChanged:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                        updateSlider(input)
+                    end
+                end)
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if connection then
+                            connection:Disconnect()
+                        end
+                    end
+                end)
+            end)
+
+            return Slider
+        end
+        
+        function Category:CreateColorpicker(text, default, callback)
+            local Colorpicker = {}
+            local color = default or Color3.fromRGB(255, 255, 255)
+
+            local PickerHolder = Instance.new("Frame")
+            PickerHolder.Name = text
+            PickerHolder.Parent = ModuleHolder
+            PickerHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            PickerHolder.BackgroundTransparency = 0.3
+            PickerHolder.Size = UDim2.new(1, 0, 0, 32)
+            PickerHolder.BorderSizePixel = 0
+
+            -- Position based on number of existing elements
+            local elementCount = 0
+            for _, child in pairs(ModuleHolder:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("TextButton") or child:IsA("TextLabel") then
+                    elementCount = elementCount + 1
+                end
+            end
+            PickerHolder.Position = UDim2.new(0, 0, 0, (elementCount - 1) * 20)
+
+            local PickerLabel = Instance.new("TextLabel")
+            PickerLabel.Name = "Label"
+            PickerLabel.Parent = PickerHolder
+            PickerLabel.BackgroundTransparency = 1
+            PickerLabel.Position = UDim2.new(0, 8, 0, 0)
+            PickerLabel.Size = UDim2.new(1, -40, 0, 20)
+            PickerLabel.Font = Enum.Font.SourceSans
+            PickerLabel.Text = text
+            PickerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            PickerLabel.TextSize = 14
+            PickerLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+            local ColorPreview = Instance.new("TextButton")
+            ColorPreview.Name = "ColorPreview"
+            ColorPreview.Parent = PickerHolder
+            ColorPreview.BackgroundColor3 = color
+            ColorPreview.BorderSizePixel = 0
+            ColorPreview.Position = UDim2.new(1, -28, 0, 4)
+            ColorPreview.Size = UDim2.new(0, 24, 0, 24)
+            ColorPreview.Text = ""
+            ColorPreview.AutoButtonColor = false
+
+            -- Popup for RGB input
+            local Popup = Instance.new("Frame")
+            Popup.Name = "ColorPopup"
+            Popup.Parent = PickerHolder
+            Popup.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            Popup.BorderSizePixel = 0
+            Popup.Position = UDim2.new(0, 0, 1, 0)
+            Popup.Size = UDim2.new(1, 0, 0, 40)
+            Popup.Visible = false
+            Popup.ZIndex = 10
+
+            local RBox = Instance.new("TextBox")
+            RBox.Parent = Popup
+            RBox.Size = UDim2.new(0, 36, 0, 24)
+            RBox.Position = UDim2.new(0, 8, 0, 8)
+            RBox.Text = tostring(math.floor(color.R * 255))
+            RBox.PlaceholderText = "R"
+            RBox.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+            RBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            RBox.Font = Enum.Font.SourceSans
+            RBox.TextSize = 14
+
+            local GBox = Instance.new("TextBox")
+            GBox.Parent = Popup
+            GBox.Size = UDim2.new(0, 36, 0, 24)
+            GBox.Position = UDim2.new(0, 52, 0, 8)
+            GBox.Text = tostring(math.floor(color.G * 255))
+            GBox.PlaceholderText = "G"
+            GBox.BackgroundColor3 = Color3.fromRGB(0, 60, 0)
+            GBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            GBox.Font = Enum.Font.SourceSans
+            GBox.TextSize = 14
+
+            local BBox = Instance.new("TextBox")
+            BBox.Parent = Popup
+            BBox.Size = UDim2.new(0, 36, 0, 24)
+            BBox.Position = UDim2.new(0, 96, 0, 8)
+            BBox.Text = tostring(math.floor(color.B * 255))
+            BBox.PlaceholderText = "B"
+            BBox.BackgroundColor3 = Color3.fromRGB(0, 0, 60)
+            BBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            BBox.Font = Enum.Font.SourceSans
+            BBox.TextSize = 14
+
+            local ApplyBtn = Instance.new("TextButton")
+            ApplyBtn.Parent = Popup
+            ApplyBtn.Size = UDim2.new(0, 36, 0, 24)
+            ApplyBtn.Position = UDim2.new(0, 140, 0, 8)
+            ApplyBtn.Text = "Set"
+            ApplyBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+            ApplyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ApplyBtn.Font = Enum.Font.SourceSans
+            ApplyBtn.TextSize = 14
+
+            ColorPreview.MouseButton1Click:Connect(function()
+                Popup.Visible = not Popup.Visible
+            end)
+
+            ApplyBtn.MouseButton1Click:Connect(function()
+                local r = tonumber(RBox.Text) or 0
+                local g = tonumber(GBox.Text) or 0
+                local b = tonumber(BBox.Text) or 0
+                r = math.clamp(r, 0, 255)
+                g = math.clamp(g, 0, 255)
+                b = math.clamp(b, 0, 255)
+                color = Color3.fromRGB(r, g, b)
+                ColorPreview.BackgroundColor3 = color
+                Popup.Visible = false
+                if callback then
+                    callback(color)
+                end
+            end)
+
+            function Colorpicker:GetColor()
+                return color
+            end
+
+            function Colorpicker:SetColor(newColor)
+                color = newColor
+                ColorPreview.BackgroundColor3 = color
+                RBox.Text = tostring(math.floor(color.R * 255))
+                GBox.Text = tostring(math.floor(color.G * 255))
+                BBox.Text = tostring(math.floor(color.B * 255))
+                if callback then
+                    callback(color)
+                end
+            end
+
+            return Colorpicker
+        end
+
+        -- Track the maximum width of any option text in this category
+        local maxOptionWidth = 120
+
+        -- Helper to get the next Y offset for a new element in ModuleHolder
+        local function getNextYOffset()
+            local offset = 0
+            for _, child in ipairs(ModuleHolder:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("TextButton") or child:IsA("TextLabel") then
+                    offset = offset + child.Size.Y.Offset
+                end
+            end
+            return offset
+        end
+
+        -- Patch all option creators to use getNextYOffset for positioning
+        local oldCreateToggle = Category.CreateToggle
+        function Category:CreateToggle(toggleConfig)
+            local toggle = oldCreateToggle(self, toggleConfig)
+            -- Fix position
+            local btn = ModuleHolder:FindFirstChild(toggleConfig.text)
+            if btn then
+                btn.Position = UDim2.new(0, 0, 0, getNextYOffset() - btn.Size.Y.Offset)
+            end
+            -- Also fix settings holder if present
+            local settingsHolder = ModuleHolder:FindFirstChild("Settings_" .. toggleConfig.text)
+            if settingsHolder then
+                settingsHolder.Position = UDim2.new(0, 0, 0, getNextYOffset())
+            end
+            return toggle
+        end
+
+        local oldCreateButton = Category.CreateButton
+        function Category:CreateButton(buttonConfig)
+            local btn = oldCreateButton(self, buttonConfig)
+            local btnInst = ModuleHolder:FindFirstChild(buttonConfig.text)
+            if btnInst then
+                btnInst.Position = UDim2.new(0, 0, 0, getNextYOffset() - btnInst.Size.Y.Offset)
+            end
+            return btn
+        end
+
+        local oldCreateLabel = Category.CreateLabel
+        function Category:CreateLabel(text)
+            local lbl = oldCreateLabel(self, text)
+            local lblInst = ModuleHolder:FindFirstChild(text)
+            if lblInst then
+                lblInst.Position = UDim2.new(0, 0, 0, getNextYOffset() - lblInst.Size.Y.Offset)
+            end
+            return lbl
+        end
+
+        local oldCreateTextbox = Category.CreateTextbox
+        function Category:CreateTextbox(textboxConfig)
+            local tb = oldCreateTextbox(self, textboxConfig)
+            local tbInst = ModuleHolder:FindFirstChild(textboxConfig.text)
+            if tbInst then
+                tbInst.Position = UDim2.new(0, 0, 0, getNextYOffset() - tbInst.Size.Y.Offset)
+            end
+            return tb
+        end
+
+        local oldCreateDropdown = Category.CreateDropdown
+        function Category:CreateDropdown(text, options, callback, default)
+            local dd = oldCreateDropdown(self, text, options, callback, default)
+            local ddInst = ModuleHolder:FindFirstChild(text)
+            if ddInst then
+                ddInst.Position = UDim2.new(0, 0, 0, getNextYOffset() - ddInst.Size.Y.Offset)
+            end
+            return dd
+        end
+
+        local oldCreateSlider = Category.CreateSlider
+        function Category:CreateSlider(sliderConfig)
+            local sl = oldCreateSlider(self, sliderConfig)
+            local slInst = ModuleHolder:FindFirstChild(sliderConfig.text)
+            if slInst then
+                slInst.Position = UDim2.new(0, 0, 0, getNextYOffset() - slInst.Size.Y.Offset)
+            end
+            return sl
+        end
+
+        local oldCreateColorpicker = Category.CreateColorpicker
+        function Category:CreateColorpicker(text, default, callback)
+            local cp = oldCreateColorpicker(self, text, default, callback)
+            local cpInst = ModuleHolder:FindFirstChild(text)
+            if cpInst then
+                cpInst.Position = UDim2.new(0, 0, 0, getNextYOffset() - cpInst.Size.Y.Offset)
+            end
+            return cp
+        end
+
         table.insert(categories, Category)
         return Category
     end
