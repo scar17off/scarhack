@@ -334,18 +334,21 @@ function boxBase:Update()
         self.Components.Tracer.Visible = false
     end
 
-        if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
+    if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
         -- Always ensure Highlight exists if Glow is enabled and ESP is enabled
         if not self.Components.Highlight or not self.Components.Highlight.Parent then
             if self.Components.Highlight then
                 self.Components.Highlight:Destroy()
             end
             self.Components.Highlight = Instance.new("Highlight")
-            if self.Object:IsA("BasePart") then
-                self.Components.Highlight.Parent = game
+            -- Fix: Set Adornee to the Model (character), not a part
+            if self.Object:IsA("Model") then
+                self.Components.Highlight.Parent = self.Object
                 self.Components.Highlight.Adornee = self.Object
             else
+                -- fallback for non-models
                 self.Components.Highlight.Parent = self.Object
+                self.Components.Highlight.Adornee = self.Object
             end
         end
         -- Determine colors based on team settings
@@ -582,8 +585,15 @@ function ESP:Add(obj, options)
     -- Create Highlight component immediately if glow is enabled and object should be visible
     if self.Glow and self.Glow.Enabled and isEnabled then
         box.Components.Highlight = Instance.new("Highlight")
-        box.Components.Highlight.Parent = obj
-        
+        -- Fix: Set Adornee to the Model (character), not a part
+        if obj:IsA("Model") then
+            box.Components.Highlight.Parent = obj
+            box.Components.Highlight.Adornee = obj
+        else
+            box.Components.Highlight.Parent = obj
+            box.Components.Highlight.Adornee = obj
+        end
+
         -- Set initial glow properties
         local fillColor, outlineColor
         if self.Glow.TeamColor then
