@@ -319,15 +319,8 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateToggle({
-    text = "Teammates",
-    callback = function(state)
-        ESP.TeamMates = state
-    end
-})
-
-VisualTab:CreateToggle({
     text = "Boxes",
-    default = false,
+    default = true,
     callback = function(Value)
         ESP.Boxes = Value
     end
@@ -350,10 +343,10 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateToggle({
-    text = "Team Check",
+    text = "Teammates",
     default = true,
     callback = function(Value)
-        ESP.TeamMates = not Value
+        ESP.TeamMates = Value
     end
 })
 
@@ -395,8 +388,6 @@ VisualTab:CreateToggle({
         ESP.Glow.TeamColor = Value
     end
 })
-
-ESP:Toggle(false)
 
 VisualTab:CreateToggle({
     text = "Show Distance",
