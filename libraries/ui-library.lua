@@ -709,13 +709,11 @@ function UI.CreateWindow()
                 OptionsFrame.Visible = isOpen
             end)
 
-            -- Hide dropdown if user clicks elsewhere
+            -- Hide dropdown if user clicks elsewhere (but NOT on an option)
             game:GetService("UserInputService").InputBegan:Connect(function(input)
                 if isOpen and input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    local mouse = game:GetService("UserInputService"):GetMouseLocation()
-                    local absPos = OptionsFrame.AbsolutePosition
-                    local absSize = OptionsFrame.AbsoluteSize
-                    if not (mouse.X >= absPos.X and mouse.X <= absPos.X + absSize.X and mouse.Y >= absPos.Y and mouse.Y <= absPos.Y + absSize.Y) then
+                    local guiObject = input.Target
+                    if not (guiObject and guiObject:IsDescendantOf(OptionsFrame)) then
                         OptionsFrame.Visible = false
                         isOpen = false
                     end
