@@ -631,6 +631,7 @@ function UI.CreateWindow()
             DropdownHolder.BackgroundTransparency = 0.3
             DropdownHolder.Size = UDim2.new(1, 0, 0, 24)
             DropdownHolder.BorderSizePixel = 0
+            DropdownHolder.ZIndex = 2 -- ensure on top
 
             -- Position based on number of existing elements
             local elementCount = 0
@@ -652,6 +653,7 @@ function UI.CreateWindow()
             DropdownLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
             DropdownLabel.TextSize = 14
             DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+            DropdownLabel.ZIndex = 3
 
             local DropdownButton = Instance.new("TextButton")
             DropdownButton.Name = "DropdownButton"
@@ -664,7 +666,7 @@ function UI.CreateWindow()
             DropdownButton.Text = "▼"
             DropdownButton.TextColor3 = Color3.fromRGB(200, 200, 200)
             DropdownButton.TextSize = 14
-            DropdownButton.ZIndex = 2
+            DropdownButton.ZIndex = 4
 
             local OptionsFrame = Instance.new("Frame")
             OptionsFrame.Name = "Options"
@@ -674,12 +676,12 @@ function UI.CreateWindow()
             OptionsFrame.Position = UDim2.new(0, 0, 1, 0)
             OptionsFrame.Size = UDim2.new(1, 0, 0, #options * 20)
             OptionsFrame.Visible = false
-            OptionsFrame.ZIndex = 3
+            OptionsFrame.ZIndex = 10 -- ensure always on top
 
             -- Add option buttons
             for i, option in ipairs(options) do
                 local OptionButton = Instance.new("TextButton")
-                OptionButton.Name = tostring(option)
+                OptionButton.Name = "Option_" .. tostring(i)
                 OptionButton.Parent = OptionsFrame
                 OptionButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
                 OptionButton.BorderSizePixel = 0
@@ -689,7 +691,7 @@ function UI.CreateWindow()
                 OptionButton.Text = tostring(option)
                 OptionButton.TextColor3 = Color3.fromRGB(200, 200, 200)
                 OptionButton.TextSize = 14
-                OptionButton.ZIndex = 4
+                OptionButton.ZIndex = 11
 
                 OptionButton.MouseButton1Click:Connect(function()
                     selected = option
