@@ -254,24 +254,39 @@ RunService.RenderStepped:Connect(function()
         FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
     end
 
-    if AIMBOT_ENABLED then
+    -- Only aim if localplayer is alive (has character and humanoid and not dead)
+    local char = LocalPlayer.Character
+    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+    local alive = humanoid and humanoid.Health > 0
+
+    if AIMBOT_ENABLED and alive then
         local Target, TargetPart = GetClosestPlayerToMouse()
         if Target and TargetPart then
-            local targetPos = CAMERA:WorldToScreenPoint(TargetPart.Position)
+            local targetPos3 = CAMERA:WorldToScreenPoint(TargetPart.Position)
             local mousePos = Vector2.new(Mouse.X, Mouse.Y)
             local moveVector = Vector2.new(
-                (targetPos.X - mousePos.X),
-                (targetPos.Y - mousePos.Y)
+                (targetPos3.X - mousePos.X),
+                (targetPos3.Y - mousePos.Y)
             )
 
-            if AIM_METHOD == "Plain" then
-                mousemoverel(moveVector.X, moveVector.Y)
-            elseif AIM_METHOD == "Smooth" then
-                mousemoverel(moveVector.X / SMOOTHNESS, moveVector.Y / SMOOTHNESS)
-            elseif AIM_METHOD == "Flick" then
-                -- Wait small random delay then flick
-                if math.random() < 0.1 then  -- 10% chance each frame
-                    mousemoverel(moveVector.X * 0.8, moveVector.Y * 0.8)
+            -- Only move if target is on screen
+            if targetPos3.Z > 0 then
+                -- Clamp the move vector to avoid huge jumps
+                local maxMove = 100
+                moveVector = Vector2.new(
+                    math.clamp(moveVector.X, -maxMove, maxMove),
+                    math.clamp(moveVector.Y, -maxMove, maxMove)
+                )
+
+                if AIM_METHOD == "Plain" then
+                    mousemoverel(moveVector.X, moveVector.Y)
+                elseif AIM_METHOD == "Smooth" then
+                    mousemoverel(moveVector.X / SMOOTHNESS, moveVector.Y / SMOOTHNESS)
+                elseif AIM_METHOD == "Flick" then
+                    -- Wait small random delay then flick
+                    if math.random() < 0.1 then  -- 10% chance each frame
+                        mousemoverel(moveVector.X * 0.8, moveVector.Y * 0.8)
+                    end
                 end
             end
         end
