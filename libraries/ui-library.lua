@@ -142,25 +142,37 @@ function UI.CreateWindow()
                 -- Update settings size
                 SettingsHolder.Size = UDim2.new(1, 0, 0, settingsOpen and settingsHeight or 0)
 
-                -- Update positions of all buttons and their settings
-                local currentOffset = 0
-                for _, child in pairs(ModuleHolder:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        -- Position the button
-                        child.Position = UDim2.new(0, 0, 0, currentOffset)
-                        currentOffset = currentOffset + 20
-
-                        -- Find and position its settings holder
-                        local settingsHolder = ModuleHolder:FindFirstChild("Settings_" .. child.Name)
-                        if settingsHolder then
-                            settingsHolder.Position = UDim2.new(0, 0, 0, currentOffset)
-                            if settingsHolder.Visible then
-                                currentOffset = currentOffset + settingsHolder.Size.Y.Offset
-                            end
+                -- Move all elements below this toggle down if settings are open
+                local foundSelf = false
+                local offset = 0
+                for _, child in ipairs(ModuleHolder:GetChildren()) do
+                    if child == ToggleButton then
+                        foundSelf = true
+                        child.Position = UDim2.new(0, 0, 0, offset)
+                        offset = offset + child.Size.Y.Offset
+                        -- Position settings holder right after the toggle
+                        SettingsHolder.Position = UDim2.new(0, 0, 0, offset)
+                        if SettingsHolder.Visible then
+                            offset = offset + SettingsHolder.Size.Y.Offset
                         end
-                    elseif child:IsA("TextLabel") then
-                        child.Position = UDim2.new(0, 0, 0, currentOffset)
-                        currentOffset = currentOffset + 20
+                    elseif foundSelf then
+                        child.Position = UDim2.new(0, 0, 0, offset)
+                        offset = offset + child.Size.Y.Offset
+                        -- Also move their settings if open
+                        local settingsHolder = ModuleHolder:FindFirstChild("Settings_" .. child.Name)
+                        if settingsHolder and settingsHolder.Visible then
+                            settingsHolder.Position = UDim2.new(0, 0, 0, offset)
+                            offset = offset + settingsHolder.Size.Y.Offset
+                        end
+                    else
+                        child.Position = UDim2.new(0, 0, 0, offset)
+                        offset = offset + child.Size.Y.Offset
+                        -- Also move their settings if open
+                        local settingsHolder = ModuleHolder:FindFirstChild("Settings_" .. child.Name)
+                        if settingsHolder and settingsHolder.Visible then
+                            settingsHolder.Position = UDim2.new(0, 0, 0, offset)
+                            offset = offset + settingsHolder.Size.Y.Offset
+                        end
                     end
                 end
             end)
