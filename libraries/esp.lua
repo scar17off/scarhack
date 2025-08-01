@@ -96,21 +96,22 @@ end
 
 function ESP:Toggle(bool)
     ESP.Enabled = bool
-    
-    if not bool then
-        for _, v in pairs(ESP.Objects) do
-            if v.Type == "Box" then
-                for _, component in pairs(v.Components) do
-                    if typeof(component) ~= "Instance" then
-                        component.Visible = false
-                    elseif typeof(component) == "Instance" and component:IsA("Highlight") then
+
+    for _, v in pairs(ESP.Objects) do
+        if v.Type == "Box" then
+            for _, component in pairs(v.Components) do
+                if typeof(component) ~= "Instance" then
+                    component.Visible = bool
+                elseif typeof(component) == "Instance" and component:IsA("Highlight") then
+                    if not bool then
                         component.Enabled = false
+                    else
                         component:Destroy()
+                        v.Components.Highlight = nil
                     end
                 end
             end
         end
-        return
     end
 end
 
@@ -332,11 +333,15 @@ function boxBase:Update()
             self.Components.Highlight = Instance.new("Highlight")
             -- Create highlight and set its Adornee property
             if self.Object:IsA("BasePart") then
-                self.Components.Highlight.Parent = game
                 self.Components.Highlight.Adornee = self.Object
-            else
-                -- For models/characters, parent directly
                 self.Components.Highlight.Parent = self.Object
+            elseif self.Object:IsA("Model") and self.Object.PrimaryPart then
+                self.Components.Highlight.Adornee = self.Object
+                self.Components.Highlight.Parent = self.Object
+            else
+                -- fallback: do not create highlight to avoid error
+                self.Components.Highlight:Destroy()
+                self.Components.Highlight = nil
             end
         end
         
