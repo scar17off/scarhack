@@ -334,19 +334,20 @@ function boxBase:Update()
         self.Components.Tracer.Visible = false
     end
 
-    if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
-        if not self.Components.Highlight then
+        if ESP.Glow and type(ESP.Glow) == "table" and ESP.Glow.Enabled then
+        -- Always ensure Highlight exists if Glow is enabled and ESP is enabled
+        if not self.Components.Highlight or not self.Components.Highlight.Parent then
+            if self.Components.Highlight then
+                self.Components.Highlight:Destroy()
+            end
             self.Components.Highlight = Instance.new("Highlight")
-            -- Create highlight and set its Adornee property
             if self.Object:IsA("BasePart") then
                 self.Components.Highlight.Parent = game
                 self.Components.Highlight.Adornee = self.Object
             else
-                -- For models/characters, parent directly
                 self.Components.Highlight.Parent = self.Object
             end
         end
-        
         -- Determine colors based on team settings
         local fillColor, outlineColor
         if ESP.Glow.TeamColor then
@@ -355,30 +356,24 @@ function boxBase:Update()
                 fillColor = p.Team.TeamColor.Color
                 outlineColor = p.Team.TeamColor.Color
             else
-                -- If not a player or no team, use the object's color or default colors
                 fillColor = self.Color or ESP.Glow.FillColor
                 outlineColor = self.Color or ESP.Glow.OutlineColor
             end
         else
-            -- Use the object's color if available, otherwise use glow colors
             fillColor = self.Color or ESP.Glow.FillColor
             outlineColor = self.Color or ESP.Glow.OutlineColor
         end
-        
-        -- Set the outline to be solid and visible
+
         self.Components.Highlight.OutlineTransparency = 0
         self.Components.Highlight.OutlineColor = outlineColor
-        
-        -- Set the fill properties
+
         if ESP.Glow.Filled then
             self.Components.Highlight.FillTransparency = ESP.Glow.Transparency
             self.Components.Highlight.FillColor = fillColor
         else
-            -- If not filled, make the fill completely transparent
             self.Components.Highlight.FillTransparency = 1
         end
-        
-        -- Enable the highlight
+
         self.Components.Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         self.Components.Highlight.Enabled = true
     else
