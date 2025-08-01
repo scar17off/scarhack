@@ -96,7 +96,7 @@ end
 
 function ESP:Toggle(bool)
     ESP.Enabled = bool
-    
+
     if not bool then
         for _, v in pairs(ESP.Objects) do
             if v.Type == "Box" then
@@ -111,6 +111,13 @@ function ESP:Toggle(bool)
             end
         end
         return
+    end
+
+    -- Fix: When enabling ESP, update all boxes so glow/highlight is recreated if needed
+    for _, v in pairs(ESP.Objects) do
+        if v.Update then
+            pcall(function() v:Update() end)
+        end
     end
 end
 
