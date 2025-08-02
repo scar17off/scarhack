@@ -1,3 +1,6 @@
+-- Hypershot
+-- https://www.roblox.com/games/17516596118/NEW-Hypershot-Gunfight
+
 -- Libraries
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
@@ -7,7 +10,6 @@ local Window = UI.CreateWindow()
 
 local AimbotTab = Window:CreateCategory("Aimbot")
 local VisualTab = Window:CreateCategory("Visuals")
-local AutoPlayTab = Window:CreateCategory("Auto Play")
 
 -- Shortcuts for easier access
 local UserInputService = game:GetService("UserInputService")
@@ -88,19 +90,54 @@ AimbotTab:CreateToggle({
 })
 
 local PlayerHitboxes = {}
+local IsPartVisible_ignoreList = nil
+local IsPartVisible_ignoreListTime = nil
 
 local function IsPartVisible(part)
-    local camera = game.Workspace.CurrentCamera
+    local camera = workspace.CurrentCamera
     if not camera then return false end
 
     local origin = camera.CFrame.Position
     local target = part.Position
-    local vector = (target - origin)
-    local ray = Ray.new(origin, vector)
+    local direction = (target - origin)
 
-    local ignoreList = {game.Players.LocalPlayer.Character}
+    -- Use a local cache table instead of attaching to the function
+    local ignoreList, ignoreListTime = IsPartVisible_ignoreList, IsPartVisible_ignoreListTime
+    if not ignoreList or tick() - (ignoreListTime or 0) > 0.5 then
+        ignoreList = {LocalPlayer.Character}
+        local mobs = workspace:FindFirstChild("Mobs")
+        if mobs then
+            for _, mob in ipairs(mobs:GetChildren()) do
+                for _, child in ipairs(mob:GetDescendants()) do
+                    if child:IsA("Highlight") or (child:IsA("BasePart") and child.Name == "FakeHRP") then
+                        table.insert(ignoreList, child)
+                    end
+                end
+            end
+        end
+        -- Add everything in workspace.IgnoreThese to ignore list
+        local ignoreFolder = workspace:FindFirstChild("IgnoreThese")
+        if ignoreFolder then
+            for _, obj in ipairs(ignoreFolder:GetDescendants()) do
+                if typeof(obj) == "Instance" then
+                    table.insert(ignoreList, obj)
+                end
+            end
+        end
+        IsPartVisible_ignoreList = ignoreList
+        IsPartVisible_ignoreListTime = tick()
+    end
 
-    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
+    -- Filter ignoreList to only objects (Instance)
+    local filteredIgnoreList = {}
+    for _, v in ipairs(ignoreList) do
+        if typeof(v) == "Instance" then
+            table.insert(filteredIgnoreList, v)
+        end
+    end
+
+    local ray = Ray.new(origin, direction)
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, filteredIgnoreList)
 
     if hit then
         if hit == part or hit:IsDescendantOf(part.Parent) then
@@ -146,52 +183,54 @@ local function GetClosestVisiblePart(character)
 end
 
 local function GetClosestPlayerToMouse()
-    local ClosestPlayer = nil
+    local ClosestTarget = nil
     local ClosestDistance = math.huge
     local ClosestPart = nil
 
-    for _, player in pairs(Players:GetPlayers()) do
+    -- Check enemy players (with highlight check instead of .Team)
+    for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
-            -- Ignore friends if toggle is on
             if not IGNORE_FRIENDS or not LocalPlayer:IsFriendsWith(player.UserId) then
-                if not TEAM_CHECK or player.Team ~= LocalPlayer.Team then
-                    local character = player.Character
-                    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-                    if character and humanoid and humanoid.Health > 0 then
-                        local targetPart = nil
-
-                        if AIM_TARGET == "Any" then
-                            if RANDOM_HITBOX then
-                                -- Check if player needs a new random hitbox
-                                if not PlayerHitboxes[player] then
-                                    local validParts = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
-                                    PlayerHitboxes[player] = validParts[math.random(1, #validParts)]
-                                end
-                                targetPart = character:FindFirstChild(PlayerHitboxes[player])
-                            else
-                                -- Use preferred hitbox if visible, otherwise find closest visible part
-                                local preferredPart = character:FindFirstChild(PREFERRED_HITBOX)
-                                if preferredPart and IsPartVisible(preferredPart) then
-                                    targetPart = preferredPart
-                                else
-                                    targetPart = GetClosestVisiblePart(character)
+                local character = player.Character
+                local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+                if character and humanoid and humanoid.Health > 0 and (not TEAM_CHECK or not character:FindFirstChild("PlayerOutline")) then
+                    local targetPart = nil
+                    if AIM_TARGET == "Any" then
+                        local preferredPart = character:FindFirstChild(PREFERRED_HITBOX)
+                        if preferredPart and (not VISIBLE_CHECK or IsPartVisible(preferredPart)) then
+                            targetPart = preferredPart
+                        else
+                            local validParts = {
+                                "Head", "HumanoidRootPart", "Torso",
+                                "Left Arm", "Right Arm", "Left Leg", "Right Leg"
+                            }
+                            local closestPart = nil
+                            local closestDist = math.huge
+                            for _, partName in ipairs(validParts) do
+                                local part = character:FindFirstChild(partName)
+                                if part and (not VISIBLE_CHECK or IsPartVisible(part)) then
+                                    local screenPoint = CAMERA:WorldToScreenPoint(part.Position)
+                                    local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                                    if dist < closestDist then
+                                        closestDist = dist
+                                        closestPart = part
+                                    end
                                 end
                             end
-                        else
-                            targetPart = character:FindFirstChild(AIM_TARGET)
+                            targetPart = closestPart
                         end
-
-                        if targetPart then
-                            if not VISIBLE_CHECK or IsPartVisible(targetPart) then
-                                local screenPoint = CAMERA:WorldToScreenPoint(targetPart.Position)
-                                local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-
-                                if (not REQUIRE_FOV or mouseDistance <= FOV_RADIUS) then
-                                    if mouseDistance < ClosestDistance then
-                                        ClosestDistance = mouseDistance
-                                        ClosestPlayer = player
-                                        ClosestPart = targetPart
-                                    end
+                    else
+                        targetPart = character:FindFirstChild(AIM_TARGET)
+                    end
+                    if targetPart then
+                        if not VISIBLE_CHECK or IsPartVisible(targetPart) then
+                            local screenPoint = CAMERA:WorldToScreenPoint(targetPart.Position)
+                            local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                            if (not REQUIRE_FOV or mouseDistance <= FOV_RADIUS) then
+                                if mouseDistance < ClosestDistance then
+                                    ClosestDistance = mouseDistance
+                                    ClosestTarget = player
+                                    ClosestPart = targetPart
                                 end
                             end
                         end
@@ -201,7 +240,61 @@ local function GetClosestPlayerToMouse()
         end
     end
 
-    return ClosestPlayer, ClosestPart
+    -- Check enemy mobs (must have EnemyHighlight)
+    local mobs = workspace:FindFirstChild("Mobs")
+    if mobs then
+        for _, mob in ipairs(mobs:GetChildren()) do
+            if mob:FindFirstChild("EnemyHighlight") then
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid and humanoid.Health > 0 then
+                    local targetPart = nil
+                    if AIM_TARGET == "Any" then
+                        -- Try preferred hitbox first if visible
+                        if PREFERRED_HITBOX and mob:FindFirstChild(PREFERRED_HITBOX) and (not VISIBLE_CHECK or IsPartVisible(mob[PREFERRED_HITBOX])) then
+                            targetPart = mob[PREFERRED_HITBOX]
+                        else
+                            -- Fallback: find the closest visible part (ignoring visibility if VISIBLE_CHECK is off)
+                            local validParts = {
+                                "Head", "HumanoidRootPart", "Torso",
+                                "Left Arm", "Right Arm", "Left Leg", "Right Leg"
+                            }
+                            local closestPart = nil
+                            local closestDist = math.huge
+                            for _, partName in ipairs(validParts) do
+                                local part = mob:FindFirstChild(partName)
+                                if part and (not VISIBLE_CHECK or IsPartVisible(part)) then
+                                    local screenPoint = CAMERA:WorldToScreenPoint(part.Position)
+                                    local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                                    if dist < closestDist then
+                                        closestDist = dist
+                                        closestPart = part
+                                    end
+                                end
+                            end
+                            targetPart = closestPart
+                        end
+                    else
+                        targetPart = mob:FindFirstChild(AIM_TARGET)
+                    end
+                    if targetPart then
+                        if not VISIBLE_CHECK or IsPartVisible(targetPart) then
+                            local screenPoint = CAMERA:WorldToScreenPoint(targetPart.Position)
+                            local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                            if (not REQUIRE_FOV or mouseDistance <= FOV_RADIUS) then
+                                if mouseDistance < ClosestDistance then
+                                    ClosestDistance = mouseDistance
+                                    ClosestTarget = mob
+                                    ClosestPart = targetPart
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return ClosestTarget, ClosestPart
 end
 
 AimbotTab:CreateToggle({
@@ -532,216 +625,5 @@ VisualTab:CreateToggle({
     text = "Health",
     callback = function(state)
         ESP.Health.Enabled = state
-    end
-})
-
--- Auto play
--- Pathfinder to nearest enemy
-local PathfindingService = game:GetService("PathfindingService")
-
-local PATHFINDER_ENABLED = false
-local PATH_UPDATE_INTERVAL = 0.2 -- seconds between path recalculation
-local WAYPOINT_THRESHOLD = 3 -- studs to next waypoint
-local STUCK_TIME = 0.5 -- seconds to consider stuck at a waypoint
-local STUCK_DIST = 4   -- if not closer than this, consider stuck
-
-local function getNearestEnemy()
-    local myTeam = LocalPlayer.Team
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
-
-    local nearest, nearestDist = nil, math.huge
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Team ~= myTeam and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
-            if dist < nearestDist then
-                nearest = p
-                nearestDist = dist
-            end
-        end
-    end
-    return nearest
-end
-
-local function getPathTo(targetPos)
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
-    local path = PathfindingService:CreatePath({
-        AgentRadius = 2,
-        AgentHeight = 5,
-        AgentCanJump = true,
-        AgentJumpHeight = 10,
-        AgentMaxSlope = 45,
-    })
-    path:ComputeAsync(myRoot.Position, targetPos)
-    if path.Status == Enum.PathStatus.Success then
-        return path
-    end
-    return nil
-end
-
-local function clearWaypointVisuals(folder)
-    if folder and folder:IsA("Folder") then
-        for _, v in ipairs(folder:GetChildren()) do
-            if v:IsA("Part") then
-                v:Destroy()
-            end
-        end
-    end
-end
-
-local function visualizeWaypoints(waypoints)
-    local ws = game:GetService("Workspace")
-    local folder = ws:FindFirstChild("Autoplay waypoints")
-    if not folder then
-        folder = Instance.new("Folder")
-        folder.Name = "Autoplay waypoints"
-        folder.Parent = ws
-    end
-    clearWaypointVisuals(folder)
-    for i, wp in ipairs(waypoints) do
-        local part = Instance.new("Part")
-        part.Name = "Waypoint_" .. tostring(i)
-        part.Size = Vector3.new(0.8, 0.8, 0.8)
-        part.Shape = Enum.PartType.Ball
-        part.Anchored = true
-        part.CanCollide = false
-        part.Position = wp.Position
-        part.Color = Color3.fromRGB(255, 200, 0)
-        part.Material = Enum.Material.Neon
-        part.Parent = folder
-    end
-end
-
-local function pathfindToEnemy()
-    local lastPathUpdate = 0
-    local path = nil
-    local waypoints = {}
-    local currentWaypoint = 1
-    local lastTarget = nil
-
-    -- Stuck detection
-    local stuckTimer = 0
-    local lastPos = nil
-    local lastMoveDir = Vector3.new(0,0,0)
-    local jumpCooldown = 0
-
-    RunService.RenderStepped:Connect(function(dt)
-        if not PATHFINDER_ENABLED then return end
-
-        local myChar = LocalPlayer.Character
-        local humanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
-        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-        if not humanoid or not myRoot or humanoid.Health <= 0 then return end
-
-        -- Always update path to current target every PATH_UPDATE_INTERVAL
-        local enemy = getNearestEnemy()
-        local shouldUpdatePath = false
-        if tick() - lastPathUpdate > PATH_UPDATE_INTERVAL then
-            shouldUpdatePath = true
-        end
-        if not path or currentWaypoint > #waypoints then
-            shouldUpdatePath = true
-        end
-        if shouldUpdatePath and enemy and enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
-            path = getPathTo(enemy.Character.HumanoidRootPart.Position)
-            if path then
-                waypoints = path:GetWaypoints()
-                currentWaypoint = 2 -- skip the first (current position)
-                visualizeWaypoints(waypoints)
-            else
-                waypoints = {}
-                currentWaypoint = 1
-                visualizeWaypoints({})
-            end
-            lastPathUpdate = tick()
-        elseif shouldUpdatePath then
-            waypoints = {}
-            currentWaypoint = 1
-            visualizeWaypoints({})
-            lastPathUpdate = tick()
-        end
-
-        -- Blend direction toward up to 3 next waypoints for even more direct path
-        local moveDir = nil
-        if waypoints and waypoints[currentWaypoint] then
-            local wp = waypoints[currentWaypoint]
-            local dir = (wp.Position - myRoot.Position)
-            -- Stuck detection: if not getting closer to the waypoint for a while, skip it
-            if not lastPos then lastPos = myRoot.Position end
-            local distNow = (wp.Position - myRoot.Position).Magnitude
-            local distLast = (wp.Position - lastPos).Magnitude
-            if distNow > STUCK_DIST and math.abs(distNow - distLast) < 0.1 then
-                stuckTimer = stuckTimer + dt
-                if stuckTimer > STUCK_TIME then
-                    currentWaypoint = currentWaypoint + 1
-                    stuckTimer = 0
-                    lastPos = myRoot.Position
-                    return
-                end
-            else
-                stuckTimer = 0
-            end
-            lastPos = myRoot.Position
-
-            -- If we're moving away from the waypoint, skip it
-            if dir.Magnitude > WAYPOINT_THRESHOLD then
-                if lastPos and distNow > distLast + 0.2 then
-                    currentWaypoint = currentWaypoint + 1
-                    stuckTimer = 0
-                else
-                    -- Blend direction to next 2 waypoints for a very direct path
-                    local blendDir = Vector3.new(dir.X, 0, dir.Z)
-                    local blendCount = 1
-                    for i = 1, 2 do
-                        local nextIdx = currentWaypoint + i
-                        if waypoints[nextIdx] then
-                            local nextWp = waypoints[nextIdx]
-                            local nextDir = (nextWp.Position - myRoot.Position)
-                            blendDir = blendDir + Vector3.new(nextDir.X, 0, nextDir.Z)
-                            blendCount = blendCount + 1
-                        end
-                    end
-                    moveDir = blendDir.Magnitude > 0 and blendDir.Unit or Vector3.new(0,0,0)
-                end
-            else
-                currentWaypoint = currentWaypoint + 1
-                stuckTimer = 0
-            end
-        end
-
-        -- If not moving to a waypoint, move toward last waypoint (not lookvector)
-        if not moveDir then
-            if waypoints and #waypoints > 1 then
-                local lastWp = waypoints[#waypoints]
-                local dir = (lastWp.Position - myRoot.Position)
-                moveDir = dir.Magnitude > 0.1 and Vector3.new(dir.X, 0, dir.Z).Unit or Vector3.new(0,0,0)
-            else
-                moveDir = Vector3.new(0,0,0)
-            end
-        end
-
-        -- Always use world direction, not relative to character's facing
-        humanoid:Move(moveDir, false)
-        lastMoveDir = moveDir
-
-        -- Jump if stuck (can't move)
-        jumpCooldown = math.max(0, jumpCooldown - dt)
-        if moveDir.Magnitude > 0.1 and humanoid.MoveDirection.Magnitude < 0.05 and jumpCooldown <= 0 then
-            humanoid.Jump = true
-            jumpCooldown = 0.5
-        end
-    end)
-end
-
-pathfindToEnemy()
-
-AutoPlayTab:CreateToggle({
-    text = "Enable Auto Play",
-    default = false,
-    callback = function(Value)
-        PATHFINDER_ENABLED = Value
     end
 })

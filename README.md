@@ -13,12 +13,16 @@ A Roblox script hub with support for multiple games.
 
 ## Supported Games
 
-- [Arsenal](places/286090429.lua)
-- [AniPhobia](places/6788434697.lua)
-- [Forsaken](places/18687417158.lua)
-- [Tower of Hell](places/1962086868.lua)
-- [Specter](places/5911084042.lua)
-- [dingus](places/13924946576.lua)
+- Arsenal
+- AniPhobia
+- Forsaken
+- Tower of Hell
+- Specter: Legacy
+- Specter
+- dingus
+- 3008
+- E.R.P.O
+- Hypershot
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`
@@ -30,49 +34,6 @@ A Roblox script hub with support for multiple games.
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/main.lua"))()
 ```
-
-## Features
-
-### Arsenal
-- ESP
-- Aimbot
-  - FOV Circle
-  - Smoothness Adjustment
-  - Team Check
-  - Visibility Check
-  - Multiple Target Parts
-
-### AniPhobia
-- Auto Farm (2 methods)
-
-### Forsaken
-- ESP
-
-### Tower of Hell
-- Godmode
-- Finish
-
-### Specter: Legacy
-- ESP
-- Pickup Bone
-- Fix Fuse
-
-### Specter
-- ESP
-- Auto collect evidence
-- Van Teleport
-- Sanity and peace time information
-
-### dingus
-- No NPCs
-- ESP
-
-### 3008
-- ESP
-
-### E.R.P.O
-- ESP
-- Teleports
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)

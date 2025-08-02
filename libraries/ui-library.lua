@@ -210,7 +210,9 @@ function UI.CreateWindow()
                 ValueLabel.Position = UDim2.new(1, -42, 0, 0)
                 ValueLabel.Size = UDim2.new(0, 34, 0, 20)
                 ValueLabel.Font = Enum.Font.SourceSans
-                ValueLabel.Text = tostring(sliderConfig.default or 50)
+                -- Show decimals for float sliders
+                local showDecimals = (sliderConfig.step and sliderConfig.step < 1) or (sliderConfig.decimal == true)
+                ValueLabel.Text = showDecimals and string.format("%.2f", sliderConfig.default or 50) or tostring(sliderConfig.default or 50)
                 ValueLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
                 ValueLabel.TextSize = 14
                 ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -235,27 +237,35 @@ function UI.CreateWindow()
                 
                 local min = sliderConfig.min or 0
                 local max = sliderConfig.max or 100
+                local step = sliderConfig.step or (sliderConfig.decimal and 0.01 or 1)
                 local current = sliderConfig.default or 50
-                
+
+                local function roundToStep(val)
+                    return math.floor((val / step) + 0.5) * step
+                end
+
                 local function updateSlider(input)
                     local pos = math.clamp((input.Position.X - SliderButton.AbsolutePosition.X) / SliderButton.AbsoluteSize.X, 0, 1)
-                    local value = math.floor(min + (max - min) * pos)
+                    local value = min + (max - min) * pos
+                    value = roundToStep(value)
+                    -- Clamp to min/max after rounding
+                    value = math.clamp(value, min, max)
                     current = value
                     SliderFill.Size = UDim2.new(pos, 0, 1, 0)
-                    ValueLabel.Text = tostring(value)
+                    ValueLabel.Text = showDecimals and string.format("%.2f", value) or tostring(value)
                     if sliderConfig.callback then
                         sliderConfig.callback(value)
                     end
                 end
                 
                 SliderButton.MouseButton1Down:Connect(function()
+                    updateSlider({Position = Vector2.new(UserInputService:GetMouseLocation().X, 0)})
                     local connection
                     connection = UserInputService.InputChanged:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseMovement then
                             updateSlider(input)
                         end
                     end)
-                    
                     UserInputService.InputEnded:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 then
                             if connection then
@@ -776,12 +786,14 @@ function UI.CreateWindow()
             ValueLabel.Position = UDim2.new(1, -42, 0, 0)
             ValueLabel.Size = UDim2.new(0, 34, 0, 20)
             ValueLabel.Font = Enum.Font.SourceSans
-            ValueLabel.Text = tostring(sliderConfig.default or 50)
+            -- Show decimals for float sliders
+            local showDecimals = (sliderConfig.step and sliderConfig.step < 1) or (sliderConfig.decimal == true)
+            ValueLabel.Text = showDecimals and string.format("%.2f", sliderConfig.default or 50) or tostring(sliderConfig.default or 50)
             ValueLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
             ValueLabel.TextSize = 14
             ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
             ValueLabel.ZIndex = 3
-
+            
             SliderButton.Name = "SliderButton"
             SliderButton.Parent = SliderHolder
             SliderButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -798,23 +810,32 @@ function UI.CreateWindow()
             SliderFill.BorderSizePixel = 0
             SliderFill.Size = UDim2.new(0.5, 0, 1, 0)
             SliderFill.ZIndex = 3
-
+            
             local min = sliderConfig.min or 0
             local max = sliderConfig.max or 100
+            local step = sliderConfig.step or (sliderConfig.decimal and 0.01 or 1)
             local current = sliderConfig.default or 50
+
+            local function roundToStep(val)
+                return math.floor((val / step) + 0.5) * step
+            end
 
             local function updateSlider(input)
                 local pos = math.clamp((input.Position.X - SliderButton.AbsolutePosition.X) / SliderButton.AbsoluteSize.X, 0, 1)
-                local value = math.floor(min + (max - min) * pos)
+                local value = min + (max - min) * pos
+                value = roundToStep(value)
+                -- Clamp to min/max after rounding
+                value = math.clamp(value, min, max)
                 current = value
                 SliderFill.Size = UDim2.new(pos, 0, 1, 0)
-                ValueLabel.Text = tostring(value)
+                ValueLabel.Text = showDecimals and string.format("%.2f", value) or tostring(value)
                 if sliderConfig.callback then
                     sliderConfig.callback(value)
                 end
             end
-
+            
             SliderButton.MouseButton1Down:Connect(function()
+                updateSlider({Position = Vector2.new(UserInputService:GetMouseLocation().X, 0)})
                 local connection
                 connection = UserInputService.InputChanged:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseMovement then
