@@ -1,3 +1,6 @@
+-- Specter
+-- https://www.roblox.com/games/8267733039/SPECTER
+
 local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local window = UI.CreateWindow()

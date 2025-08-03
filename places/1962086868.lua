@@ -1,3 +1,6 @@
+-- Tower of Hell
+-- https://www.roblox.com/games/1962086868/Tower-of-Hell
+
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local window = UI.CreateWindow()
 

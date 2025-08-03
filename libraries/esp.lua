@@ -11,7 +11,6 @@ local ESP = {
     TeamColor = false,
     Thickness = 2,
     AttachShift = 1,
-    TeamMates = true,
     Players = true,
     Glow = {
         Enabled = false,

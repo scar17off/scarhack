@@ -1,5 +1,6 @@
--- Arsenal
--- https://www.roblox.com/games/286090429/Arsenal
+-- Defusal FPS
+-- https://www.roblox.com/games/79393329652220/Defusal-FPS-TESTING
+-- Bug: Aimbot aiming at teammates
 
 -- Libraries
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
@@ -10,7 +11,6 @@ local Window = UI.CreateWindow()
 
 local AimbotTab = Window:CreateCategory("Aimbot")
 local VisualTab = Window:CreateCategory("Visuals")
-local AutoPlayTab = Window:CreateCategory("Auto Play")
 
 -- Shortcuts for easier access
 local UserInputService = game:GetService("UserInputService")
@@ -19,6 +19,83 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local CAMERA = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
+
+-- ESP Player/Teammate/Enemy Listeners
+-- Helper to get team color string from Nametag, with fallback and logging
+local lastLocalTeamColor = nil
+local function getTeamColor(character)
+    local nametag = character:FindFirstChild("Nametag")
+    if nametag and nametag:FindFirstChild("Player") and nametag.Player:IsA("TextLabel") then
+        local color = nametag.Player.TextColor
+        if character.Name == LocalPlayer.Name then
+            lastLocalTeamColor = color
+        end
+        return color
+    end
+    -- fallback for localplayer if character not found
+    if character.Name == LocalPlayer.Name and lastLocalTeamColor then
+        return lastLocalTeamColor
+    end
+    return nil
+end
+
+local TrTed = Color3.fromRGB(229, 72, 72)
+local TrBlu = Color3.fromRGB(72, 72, 229)
+
+ESP.Overrides.IsTeamMate = function(char)
+    local myChar = LocalPlayer.Character
+    if not myChar or not char or char.Name == LocalPlayer.Name then return false end
+    local myTag = myChar:FindFirstChild("Nametag")
+    local theirTag = char:FindFirstChild("Nametag")
+    if not myTag or not theirTag then return false end
+    local myColor = myTag:FindFirstChild("Player") and myTag.Player.TextColor
+    local theirColor = theirTag:FindFirstChild("Player") and theirTag.Player.TextColor
+    return myColor and theirColor and myColor == theirColor
+end
+
+ESP.Overrides.GetColor = function(char)
+    if ESP.TeamColor then
+        local tag = char:FindFirstChild("Nametag")
+        if tag and tag:FindFirstChild("Player") and tag.Player:IsA("TextLabel") then
+            return tag.Player.TextColor3
+        end
+    end
+    return ESP.DefaultColor
+end
+
+ESP:AddObjectListener(workspace.Players, {
+    Type = "Model",
+    PrimaryPart = "HumanoidRootPart",
+    IsEnabled = function(obj)
+        return ESP.TeamMates and ESP.Overrides.IsTeamMate(obj)
+    end,
+    Validator = function(obj)
+        if obj.Name == LocalPlayer.Name or not obj:FindFirstChild("Humanoid") or not obj:FindFirstChild("Nametag") then return false end
+        return ESP.Overrides.IsTeamMate(obj)
+    end,
+    Color = function(obj)
+        return ESP.Overrides.GetColor(obj)
+    end
+})
+
+ESP:AddObjectListener(workspace.Players, {
+    Type = "Model",
+    PrimaryPart = "HumanoidRootPart",
+    IsEnabled = function(obj)
+        return ESP.Enemies and not ESP.Overrides.IsTeamMate(obj)
+    end,
+    Validator = function(obj)
+        if obj.Name == LocalPlayer.Name or not obj:FindFirstChild("Humanoid") or not obj:FindFirstChild("Nametag") then return false end
+        return not ESP.Overrides.IsTeamMate(obj)
+    end,
+    Color = function(obj)
+        return ESP.Overrides.GetColor(obj)
+    end
+})
+
+ESP.TeamMates = true
+ESP.Enemies = true
+ESP.Players = false
 
 -- Input section (Luau-ENV Input)
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -148,53 +225,61 @@ local function GetClosestVisiblePart(character)
     return closestPart
 end
 
+local function IsEnemy(character)
+    if not character or character.Name == LocalPlayer.Name then return false end
+    return not ESP.Overrides.IsTeamMate(character)
+end
+
 local function GetClosestPlayerToMouse()
-    local ClosestPlayer = nil
+    local ClosestTarget = nil
     local ClosestDistance = math.huge
     local ClosestPart = nil
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            -- Ignore friends if toggle is on
-            if not IGNORE_FRIENDS or not LocalPlayer:IsFriendsWith(player.UserId) then
-                if not TEAM_CHECK or player.Team ~= LocalPlayer.Team then
-                    local character = player.Character
-                    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-                    if character and humanoid and humanoid.Health > 0 then
-                        local targetPart = nil
+    local localChar = workspace.Players:FindFirstChild(LocalPlayer.Name)
 
-                        if AIM_TARGET == "Any" then
-                            if RANDOM_HITBOX then
-                                -- Check if player needs a new random hitbox
-                                if not PlayerHitboxes[player] then
-                                    local validParts = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
-                                    PlayerHitboxes[player] = validParts[math.random(1, #validParts)]
-                                end
-                                targetPart = character:FindFirstChild(PlayerHitboxes[player])
-                            else
-                                -- Use preferred hitbox if visible, otherwise find closest visible part
-                                local preferredPart = character:FindFirstChild(PREFERRED_HITBOX)
-                                if preferredPart and IsPartVisible(preferredPart) then
-                                    targetPart = preferredPart
-                                else
-                                    targetPart = GetClosestVisiblePart(character)
+    for _, character in ipairs(workspace.Players:GetChildren()) do
+        if character ~= localChar then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                -- Only target enemies if TEAM_CHECK is enabled
+                if not TEAM_CHECK or IsEnemy(character) then
+                    local targetPart = nil
+                    if AIM_TARGET == "Any" then
+                        local preferredPart = character:FindFirstChild(PREFERRED_HITBOX)
+                        if preferredPart and (not VISIBLE_CHECK or IsPartVisible(preferredPart)) then
+                            targetPart = preferredPart
+                        else
+                            local validParts = {
+                                "Head", "HumanoidRootPart", "Torso",
+                                "Left Arm", "Right Arm", "Left Leg", "Right Leg"
+                            }
+                            local closestPart = nil
+                            local closestDist = math.huge
+                            for _, partName in ipairs(validParts) do
+                                local part = character:FindFirstChild(partName)
+                                if part and (not VISIBLE_CHECK or IsPartVisible(part)) then
+                                    local screenPoint = CAMERA:WorldToScreenPoint(part.Position)
+                                    local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                                    if dist < closestDist then
+                                        closestDist = dist
+                                        closestPart = part
+                                    end
                                 end
                             end
-                        else
-                            targetPart = character:FindFirstChild(AIM_TARGET)
+                            targetPart = closestPart
                         end
-
-                        if targetPart then
-                            if not VISIBLE_CHECK or IsPartVisible(targetPart) then
-                                local screenPoint = CAMERA:WorldToScreenPoint(targetPart.Position)
-                                local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-
-                                if (not REQUIRE_FOV or mouseDistance <= FOV_RADIUS) then
-                                    if mouseDistance < ClosestDistance then
-                                        ClosestDistance = mouseDistance
-                                        ClosestPlayer = player
-                                        ClosestPart = targetPart
-                                    end
+                    else
+                        targetPart = character:FindFirstChild(AIM_TARGET)
+                    end
+                    if targetPart then
+                        if not VISIBLE_CHECK or IsPartVisible(targetPart) then
+                            local screenPoint = CAMERA:WorldToScreenPoint(targetPart.Position)
+                            local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                            if (not REQUIRE_FOV or mouseDistance <= FOV_RADIUS) then
+                                if mouseDistance < ClosestDistance then
+                                    ClosestDistance = mouseDistance
+                                    ClosestTarget = character
+                                    ClosestPart = targetPart
                                 end
                             end
                         end
@@ -204,7 +289,7 @@ local function GetClosestPlayerToMouse()
         end
     end
 
-    return ClosestPlayer, ClosestPart
+    return ClosestTarget, ClosestPart
 end
 
 AimbotTab:CreateToggle({
@@ -293,16 +378,6 @@ AimbotTab:CreateSlider({
         SMOOTHNESS = Value
     end
 })
-
--- AimbotToggle:CreateKeybind("F", function()
---     AIMBOT_ENABLED = not AIMBOT_ENABLED
---     AimbotToggle:SetState(AIMBOT_ENABLED)
---     if AIMBOT_ENABLED then
---         FOVCircle.Visible = true
---     else
---         FOVCircle.Visible = false
---     end
--- end)
 
 RunService.RenderStepped:Connect(function()
     if FOVCircle then
@@ -474,6 +549,14 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateToggle({
+    text = "Enemies",
+    default = true,
+    callback = function(Value)
+        ESP.Enemies = Value
+    end
+})
+
+VisualTab:CreateToggle({
     text = "Team Color",
     default = false,
     callback = function(Value)
@@ -535,216 +618,5 @@ VisualTab:CreateToggle({
     text = "Health",
     callback = function(state)
         ESP.Health.Enabled = state
-    end
-})
-
--- Auto play
--- Pathfinder to nearest enemy
-local PathfindingService = game:GetService("PathfindingService")
-
-local PATHFINDER_ENABLED = false
-local PATH_UPDATE_INTERVAL = 0.2 -- seconds between path recalculation
-local WAYPOINT_THRESHOLD = 3 -- studs to next waypoint
-local STUCK_TIME = 0.5 -- seconds to consider stuck at a waypoint
-local STUCK_DIST = 4   -- if not closer than this, consider stuck
-
-local function getNearestEnemy()
-    local myTeam = LocalPlayer.Team
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
-
-    local nearest, nearestDist = nil, math.huge
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Team ~= myTeam and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
-            if dist < nearestDist then
-                nearest = p
-                nearestDist = dist
-            end
-        end
-    end
-    return nearest
-end
-
-local function getPathTo(targetPos)
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
-    local path = PathfindingService:CreatePath({
-        AgentRadius = 2,
-        AgentHeight = 5,
-        AgentCanJump = true,
-        AgentJumpHeight = 10,
-        AgentMaxSlope = 45,
-    })
-    path:ComputeAsync(myRoot.Position, targetPos)
-    if path.Status == Enum.PathStatus.Success then
-        return path
-    end
-    return nil
-end
-
-local function clearWaypointVisuals(folder)
-    if folder and folder:IsA("Folder") then
-        for _, v in ipairs(folder:GetChildren()) do
-            if v:IsA("Part") then
-                v:Destroy()
-            end
-        end
-    end
-end
-
-local function visualizeWaypoints(waypoints)
-    local ws = game:GetService("Workspace")
-    local folder = ws:FindFirstChild("Autoplay waypoints")
-    if not folder then
-        folder = Instance.new("Folder")
-        folder.Name = "Autoplay waypoints"
-        folder.Parent = ws
-    end
-    clearWaypointVisuals(folder)
-    for i, wp in ipairs(waypoints) do
-        local part = Instance.new("Part")
-        part.Name = "Waypoint_" .. tostring(i)
-        part.Size = Vector3.new(0.8, 0.8, 0.8)
-        part.Shape = Enum.PartType.Ball
-        part.Anchored = true
-        part.CanCollide = false
-        part.Position = wp.Position
-        part.Color = Color3.fromRGB(255, 200, 0)
-        part.Material = Enum.Material.Neon
-        part.Parent = folder
-    end
-end
-
-local function pathfindToEnemy()
-    local lastPathUpdate = 0
-    local path = nil
-    local waypoints = {}
-    local currentWaypoint = 1
-    local lastTarget = nil
-
-    -- Stuck detection
-    local stuckTimer = 0
-    local lastPos = nil
-    local lastMoveDir = Vector3.new(0,0,0)
-    local jumpCooldown = 0
-
-    RunService.RenderStepped:Connect(function(dt)
-        if not PATHFINDER_ENABLED then return end
-
-        local myChar = LocalPlayer.Character
-        local humanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
-        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-        if not humanoid or not myRoot or humanoid.Health <= 0 then return end
-
-        -- Always update path to current target every PATH_UPDATE_INTERVAL
-        local enemy = getNearestEnemy()
-        local shouldUpdatePath = false
-        if tick() - lastPathUpdate > PATH_UPDATE_INTERVAL then
-            shouldUpdatePath = true
-        end
-        if not path or currentWaypoint > #waypoints then
-            shouldUpdatePath = true
-        end
-        if shouldUpdatePath and enemy and enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
-            path = getPathTo(enemy.Character.HumanoidRootPart.Position)
-            if path then
-                waypoints = path:GetWaypoints()
-                currentWaypoint = 2 -- skip the first (current position)
-                visualizeWaypoints(waypoints)
-            else
-                waypoints = {}
-                currentWaypoint = 1
-                visualizeWaypoints({})
-            end
-            lastPathUpdate = tick()
-        elseif shouldUpdatePath then
-            waypoints = {}
-            currentWaypoint = 1
-            visualizeWaypoints({})
-            lastPathUpdate = tick()
-        end
-
-        -- Blend direction toward up to 3 next waypoints for even more direct path
-        local moveDir = nil
-        if waypoints and waypoints[currentWaypoint] then
-            local wp = waypoints[currentWaypoint]
-            local dir = (wp.Position - myRoot.Position)
-            -- Stuck detection: if not getting closer to the waypoint for a while, skip it
-            if not lastPos then lastPos = myRoot.Position end
-            local distNow = (wp.Position - myRoot.Position).Magnitude
-            local distLast = (wp.Position - lastPos).Magnitude
-            if distNow > STUCK_DIST and math.abs(distNow - distLast) < 0.1 then
-                stuckTimer = stuckTimer + dt
-                if stuckTimer > STUCK_TIME then
-                    currentWaypoint = currentWaypoint + 1
-                    stuckTimer = 0
-                    lastPos = myRoot.Position
-                    return
-                end
-            else
-                stuckTimer = 0
-            end
-            lastPos = myRoot.Position
-
-            -- If we're moving away from the waypoint, skip it
-            if dir.Magnitude > WAYPOINT_THRESHOLD then
-                if lastPos and distNow > distLast + 0.2 then
-                    currentWaypoint = currentWaypoint + 1
-                    stuckTimer = 0
-                else
-                    -- Blend direction to next 2 waypoints for a very direct path
-                    local blendDir = Vector3.new(dir.X, 0, dir.Z)
-                    local blendCount = 1
-                    for i = 1, 2 do
-                        local nextIdx = currentWaypoint + i
-                        if waypoints[nextIdx] then
-                            local nextWp = waypoints[nextIdx]
-                            local nextDir = (nextWp.Position - myRoot.Position)
-                            blendDir = blendDir + Vector3.new(nextDir.X, 0, nextDir.Z)
-                            blendCount = blendCount + 1
-                        end
-                    end
-                    moveDir = blendDir.Magnitude > 0 and blendDir.Unit or Vector3.new(0,0,0)
-                end
-            else
-                currentWaypoint = currentWaypoint + 1
-                stuckTimer = 0
-            end
-        end
-
-        -- If not moving to a waypoint, move toward last waypoint (not lookvector)
-        if not moveDir then
-            if waypoints and #waypoints > 1 then
-                local lastWp = waypoints[#waypoints]
-                local dir = (lastWp.Position - myRoot.Position)
-                moveDir = dir.Magnitude > 0.1 and Vector3.new(dir.X, 0, dir.Z).Unit or Vector3.new(0,0,0)
-            else
-                moveDir = Vector3.new(0,0,0)
-            end
-        end
-
-        -- Always use world direction, not relative to character's facing
-        humanoid:Move(moveDir, false)
-        lastMoveDir = moveDir
-
-        -- Jump if stuck (can't move)
-        jumpCooldown = math.max(0, jumpCooldown - dt)
-        if moveDir.Magnitude > 0.1 and humanoid.MoveDirection.Magnitude < 0.05 and jumpCooldown <= 0 then
-            humanoid.Jump = true
-            jumpCooldown = 0.5
-        end
-    end)
-end
-
-pathfindToEnemy()
-
-AutoPlayTab:CreateToggle({
-    text = "Enable Auto Play",
-    default = false,
-    callback = function(Value)
-        PATHFINDER_ENABLED = Value
     end
 })

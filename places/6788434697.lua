@@ -1,3 +1,6 @@
+-- AniPhobia
+-- https://www.roblox.com/games/6788434697/AniPhobia
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()

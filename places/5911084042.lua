@@ -1,3 +1,6 @@
+-- Specter: Legacy
+-- https://www.roblox.com/games/5911084042/Specter-Legacy
+
 local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local window = UI.CreateWindow()
