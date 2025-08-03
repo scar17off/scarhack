@@ -33,7 +33,6 @@ end)
 
 -- Aimbot
 local AIMBOT_ENABLED = false
-local AUTO_FIRE = false
 local AUTO_FIRE_VIM = false
 local lastVimFire = 0
 local vimFireDelay = 0.05
@@ -101,7 +100,7 @@ local function IsPartVisible(part)
     local vector = (target - origin)
     local ray = Ray.new(origin, vector)
 
-    local ignoreList = {game.Players.LocalPlayer.Character}
+    local ignoreList = {LocalPlayer.Character}
 
     local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
 
@@ -212,14 +211,6 @@ AimbotTab:CreateToggle({
     default = false,
     callback = function(Value)
         AIMBOT_ENABLED = Value
-    end
-})
-
-AimbotTab:CreateToggle({
-    text = "Auto Fire",
-    default = false,
-    callback = function(Value)
-        AUTO_FIRE = Value
     end
 })
 
@@ -340,7 +331,8 @@ RunService.RenderStepped:Connect(function()
                 local direction = (TargetPart.Position - origin).Unit * (TargetPart.Position - origin).Magnitude
                 local ignoreList = {LocalPlayer.Character}
                 local hit = workspace:FindPartOnRayWithIgnoreList(Ray.new(origin, direction), ignoreList)
-                aimReady = (hit == TargetPart)
+                -- Accept hit if it's a descendant of the target character
+                aimReady = (hit and TargetPart and hit:IsDescendantOf(TargetPart.Parent))
 
                 if AIM_METHOD == "Plain" then
                     mousemoverel(moveVector.X, moveVector.Y)
@@ -354,41 +346,6 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
-
-    -- Auto Fire logic (only fire if aimReady)
-    --[[
-    if AUTO_FIRE then
-        local isrbxactive = isrbxactive
-        local iswindowactive = iswindowactive
-        local focused = UserInputService:GetFocusedTextBox()
-        local active = (isrbxactive and isrbxactive() or iswindowactive and iswindowactive())
-
-        if active then
-            if Target and TargetPart and aimReady then
-                if not focused then
-                    if MouseClicked then
-                        mouse1release()
-                    else
-                        mouse1press()
-                    end
-                    MouseClicked = not MouseClicked
-                else
-                    if MouseClicked then mouse1release() end
-                    MouseClicked = false
-                end
-            else
-                if MouseClicked then mouse1release() end
-                MouseClicked = false
-            end
-        else
-            if MouseClicked then mouse1release() end
-            MouseClicked = false
-        end
-    else
-        if MouseClicked then mouse1release() end
-        MouseClicked = false
-    end
-    ]]
 
     -- Auto Fire (VirtualInputManager) logic (only fire if aimReady)
     if AUTO_FIRE_VIM and IsWindowFocused then
