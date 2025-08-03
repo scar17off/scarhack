@@ -5,9 +5,9 @@ A Roblox script hub with support for multiple games.
 ## Credits
 
 ### Libraries
-- UI Library: [purple-haze-ui](https://github.com/Averiias/purple-haze-pf) by AlexR32
+- UI Library: [purple-haze-ui](https://github.com/Averiias/purple-haze-pf) by AlexR32 
 - ESP Library: Modified version of [ESP Library](https://kiriot22.com/releases/ESP.lua) by Kiriot22
-  - Added glow effects
+  - Added glow effect
   - Improved cleanup system
   - Added custom properties support
 
@@ -23,6 +23,8 @@ A Roblox script hub with support for multiple games.
 - 3008
 - E.R.P.O
 - Hypershot
+- Apocalypse Rising 2
+- Zombie Tower
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`

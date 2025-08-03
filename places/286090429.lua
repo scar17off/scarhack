@@ -17,8 +17,8 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local CAMERA = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
+local Camera = workspace.CurrentCamera
 
 -- Input section (Luau-ENV Input)
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -43,7 +43,7 @@ local AIM_TARGET = "Head"
 local MAX_DISTANCE = 1000
 local REQUIRE_FOV = true
 local FOV_RADIUS = 360
-local SMOOTHNESS = 1
+local SMOOTHNESS = 2
 local TEAM_CHECK = true
 local VISIBLE_CHECK = true
 local IGNORE_FRIENDS = false
@@ -134,7 +134,7 @@ local function GetClosestVisiblePart(character)
         if part then
 
             if IsPartVisible(part) then
-                local screenPoint = CAMERA:WorldToScreenPoint(part.Position)
+                local screenPoint = Camera:WorldToScreenPoint(part.Position)
                 local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
 
                 if distance < closestDistance then
@@ -186,7 +186,7 @@ local function GetClosestPlayerToMouse()
 
                         if targetPart then
                             if not VISIBLE_CHECK or IsPartVisible(targetPart) then
-                                local screenPoint = CAMERA:WorldToScreenPoint(targetPart.Position)
+                                local screenPoint = Camera:WorldToScreenPoint(targetPart.Position)
                                 local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
 
                                 if (not REQUIRE_FOV or mouseDistance <= FOV_RADIUS) then
@@ -286,9 +286,9 @@ AimbotTab:CreateSlider({
 
 AimbotTab:CreateSlider({
     text = "Smoothness",
-    min = 1,
+    min = 2,
     max = 10,
-    default = 1,
+    default = 2,
     callback = function(Value)
         SMOOTHNESS = Value
     end
@@ -306,7 +306,7 @@ AimbotTab:CreateSlider({
 
 RunService.RenderStepped:Connect(function()
     if FOVCircle then
-        FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
+        FOVCircle.Position = UserInputService:GetMouseLocation()
     end
 
     -- Only aim if localplayer is alive (has character and humanoid and not dead)
@@ -321,23 +321,26 @@ RunService.RenderStepped:Connect(function()
     if AIMBOT_ENABLED and alive then
         Target, TargetPart = GetClosestPlayerToMouse()
         if Target and TargetPart then
-            local targetPos3 = CAMERA:WorldToScreenPoint(TargetPart.Position)
-            local mousePos = Vector2.new(Mouse.X, Mouse.Y)
+            local targetScreen = Camera:WorldToViewportPoint(TargetPart.Position)
+            local mousePos = UserInputService:GetMouseLocation()
             moveVector = Vector2.new(
-                (targetPos3.X - mousePos.X),
-                (targetPos3.Y - mousePos.Y)
+                (targetScreen.X - mousePos.X),
+                (targetScreen.Y - mousePos.Y)
             )
 
-            if targetPos3.Z > 0 then
+            if targetScreen.Z > 0 then
                 local maxMove = 100
                 moveVector = Vector2.new(
                     math.clamp(moveVector.X, -maxMove, maxMove),
                     math.clamp(moveVector.Y, -maxMove, maxMove)
                 )
 
-                -- Consider "aim ready" if the mouse is close enough to the hitbox
-                local aimThreshold = 2 -- pixels
-                aimReady = (math.abs(moveVector.X) <= aimThreshold and math.abs(moveVector.Y) <= aimThreshold)
+                -- Raycast check for aimReady
+                local origin = Camera.CFrame.Position
+                local direction = (TargetPart.Position - origin).Unit * (TargetPart.Position - origin).Magnitude
+                local ignoreList = {LocalPlayer.Character}
+                local hit = workspace:FindPartOnRayWithIgnoreList(Ray.new(origin, direction), ignoreList)
+                aimReady = (hit == TargetPart)
 
                 if AIM_METHOD == "Plain" then
                     mousemoverel(moveVector.X, moveVector.Y)
