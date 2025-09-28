@@ -21,10 +21,10 @@ A Roblox script hub with support for multiple games.
 - Specter
 - dingus
 - 3008
-- E.R.P.O
 - Hypershot
 - Apocalypse Rising 2
 - Zombie Tower
+- Granny
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`

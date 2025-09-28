@@ -22,4 +22,4 @@ if success then
     loadstring(result)()
 else
     warn("[ScarHack] No specific script found for place " .. placeId)
-end 
+end
