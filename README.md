@@ -2,15 +2,6 @@
 
 A Roblox script hub with support for multiple games.
 
-## Credits
-
-### Libraries
-- UI Library: [purple-haze-ui](https://github.com/Averiias/purple-haze-pf) by AlexR32 
-- ESP Library: Modified version of [ESP Library](https://kiriot22.com/releases/ESP.lua) by Kiriot22
-  - Added glow effect
-  - Improved cleanup system
-  - Added custom properties support
-
 ## Supported Games
 
 - Arsenal
@@ -25,6 +16,7 @@ A Roblox script hub with support for multiple games.
 - Apocalypse Rising 2
 - Zombie Tower
 - Granny
+- Build Your Factory Tycoon
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`
@@ -39,6 +31,15 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/re
 
 ## Documentation
 - [ESP Library Documentation](libraries/ESP.md)
+
+## Credits
+
+### Libraries
+- UI Library: [purple-haze-ui](https://github.com/Averiias/purple-haze-pf) by AlexR32 
+- ESP Library: Modified version of [ESP Library](https://kiriot22.com/releases/ESP.lua) by Kiriot22
+  - Added glow effect
+  - Improved cleanup system
+  - Added custom properties support
 
 ## License
 [MIT License](LICENSE.md)
