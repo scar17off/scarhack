@@ -109,15 +109,29 @@ AimbotTab:CreateSlider({
     end
 })
 
-UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        FOVCircle.Position = UserInputService:GetMouseLocation()
-    end
-end)
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.NumSides = 60
+FOVCircle.Radius = Aimbot.config.FOV
+FOVCircle.Filled = false
+FOVCircle.Visible = false
+FOVCircle.ZIndex = 999
+FOVCircle.Transparency = 1
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
 
--- Player death handler for random hitbox
-game.Players.PlayerRemoving:Connect(function(player)
-    PlayerHitboxes[player] = nil
+AimbotTab:CreateToggle({
+    text = "Show FOV",
+    default = false,
+    callback = function(Value)
+        FOVCircle.Visible = Value
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if FOVCircle then
+        FOVCircle.Position = UserInputService:GetMouseLocation()
+        FOVCircle.Radius = Aimbot.config.FOV
+    end
 end)
 
 -- Visuals

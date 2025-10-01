@@ -186,8 +186,6 @@ end
 function Aimbot.GetTarget()
     local ClosestPlayer, ClosestPart, ClosestDistance = nil, nil, math.huge
 
-    print(#Aimbot.targets)
-
     -- Iterate over updated targets
     for _, target in ipairs(Aimbot.targets) do
         local player = game.Players:GetPlayerFromCharacter(target)
