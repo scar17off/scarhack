@@ -280,9 +280,13 @@ RunService.RenderStepped:Connect(function()
 
             -- Auto-fire logic
             if Aimbot.config.AutoFire and Aimbot.CanFire() then
-                VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, true, game, false)
-                task.wait(0.03)
-                VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, false, game, false)
+                local ray = Ray.new(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 500)
+                local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
+                if hit and (hit == TargetPart or hit:IsDescendantOf(TargetPart.Parent)) then
+                    VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, true, game, false)
+                    task.wait(0.03)
+                    VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, false, game, false)
+                end
             end
         end
     end
