@@ -21,17 +21,6 @@ local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
 
--- Input section (Luau-ENV Input)
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local IsWindowFocused = true
-
-UserInputService.WindowFocused:Connect(function()
-    IsWindowFocused = true
-end)
-UserInputService.WindowFocusReleased:Connect(function()
-    IsWindowFocused = false
-end)
-
 Aimbot:Setup({
     FOV = 360,
     Smoothness = 2,
@@ -120,72 +109,6 @@ AimbotTab:CreateSlider({
     end
 })
 
-RunService.RenderStepped:Connect(function()
-    if FOVCircle then
-        FOVCircle.Position = UserInputService:GetMouseLocation()
-    end
-
-    -- Only aim if localplayer is alive (has character and humanoid and not dead)
-    local char = LocalPlayer.Character
-    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-    local alive = humanoid and humanoid.Health > 0
-
-    local Target, TargetPart = nil, nil
-    local moveVector = Vector2.new(0, 0)
-    local aimReady = false
-
-    if AIMBOT_ENABLED and alive then
-        Target, TargetPart = GetClosestPlayerToMouse()
-        if Target and TargetPart then
-            local targetScreen = Camera:WorldToViewportPoint(TargetPart.Position)
-            local mousePos = UserInputService:GetMouseLocation()
-            moveVector = Vector2.new(
-                (targetScreen.X - mousePos.X),
-                (targetScreen.Y - mousePos.Y)
-            )
-
-            if targetScreen.Z > 0 then
-                local maxMove = 100
-                moveVector = Vector2.new(
-                    math.clamp(moveVector.X, -maxMove, maxMove),
-                    math.clamp(moveVector.Y, -maxMove, maxMove)
-                )
-
-                -- Raycast check for aimReady
-                local origin = Camera.CFrame.Position
-                local direction = (TargetPart.Position - origin).Unit * (TargetPart.Position - origin).Magnitude
-                local ignoreList = {LocalPlayer.Character}
-                local hit = workspace:FindPartOnRayWithIgnoreList(Ray.new(origin, direction), ignoreList)
-                -- Accept hit if it's a descendant of the target character
-                aimReady = (hit and TargetPart and hit:IsDescendantOf(TargetPart.Parent))
-
-                if AIM_METHOD == "Plain" then
-                    mousemoverel(moveVector.X, moveVector.Y)
-                elseif AIM_METHOD == "Smooth" then
-                    mousemoverel(moveVector.X / SMOOTHNESS, moveVector.Y / SMOOTHNESS)
-                elseif AIM_METHOD == "Flick" then
-                    if math.random() < 0.1 then
-                        mousemoverel(moveVector.X * 0.8, moveVector.Y * 0.8)
-                    end
-                end
-            end
-        end
-    end
-
-    -- Auto Fire (VirtualInputManager) logic (only fire if aimReady)
-    if AUTO_FIRE_VIM and IsWindowFocused then
-        if Target and TargetPart and aimReady then
-            local mousePos = UserInputService:GetMouseLocation()
-            if tick() - lastVimFire > vimFireDelay then
-                VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, true, game, false)
-                task.wait()
-                VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, false, game, false)
-                lastVimFire = tick()
-            end
-        end
-    end
-end)
-
 UserInputService.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
         FOVCircle.Position = UserInputService:GetMouseLocation()
@@ -195,18 +118,6 @@ end)
 -- Player death handler for random hitbox
 game.Players.PlayerRemoving:Connect(function(player)
     PlayerHitboxes[player] = nil
-end)
-
--- Character removal handler
-game.Workspace.ChildRemoved:Connect(function(child)
-    local player = game.Players:GetPlayerFromCharacter(child)
-    if player then
-        -- Assign new random hitbox when player dies
-        if RANDOM_HITBOX then
-            local validParts = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
-            PlayerHitboxes[player] = validParts[math.random(1, #validParts)]
-        end
-    end
 end)
 
 -- Visuals
