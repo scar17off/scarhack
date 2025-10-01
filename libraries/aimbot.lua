@@ -159,6 +159,30 @@ local function GetClosestVisiblePart(character)
     return closestPart
 end
 
+Aimbot.CanFire = function()
+    return true -- Default implementation, override it
+
+    --[[
+        Example:
+        Aimbot.CanFire = function()
+            -- Use the current tool's ammo value to determine if firing is allowed
+            local LocalPlayer = game.Players.LocalPlayer
+            local character = LocalPlayer.Character
+            local tool = character and character:FindFirstChildOfClass("Tool")
+
+            if tool and tool:FindFirstChild("Config") and tool.Config:FindFirstChild("Ammo") then
+                return tool.Config.Ammo.Value > 0 -- Only fire if ammo is greater than 0
+            end
+            return false
+        end
+    ]]
+end
+
+Aimbot.IsTeammate = function(player)
+    -- Default implementation, override it
+    return LocalPlayer.Team and player.Team and LocalPlayer.Team == player.Team
+end
+
 function Aimbot.GetTarget()
     local ClosestPlayer, ClosestPart, ClosestDistance = nil, nil, math.huge
 
@@ -170,7 +194,6 @@ function Aimbot.GetTarget()
         local character = target
 
         local humanoid = character:FindFirstChildOfClass("Humanoid")
-        print(character.Name..": "..humanoid.Health)
         if not humanoid or humanoid.Health <= 0 then
             continue
         end
@@ -181,7 +204,7 @@ function Aimbot.GetTarget()
         end
 
         -- Team check - skip teammates if enabled
-        if Aimbot.config.TeamCheck and player and LocalPlayer.Team and player.Team == LocalPlayer.Team then
+        if Aimbot.config.TeamCheck and player and Aimbot.IsTeammate(player) then
             continue
         end
 
@@ -218,25 +241,6 @@ function Aimbot.GetTarget()
     end
 
     return ClosestPlayer, ClosestPart
-end
-
-Aimbot.CanFire = function()
-    return true -- Default implementation, override it
-
-    --[[
-        Example:
-        Aimbot.CanFire = function()
-            -- Use the current tool's ammo value to determine if firing is allowed
-            local LocalPlayer = game.Players.LocalPlayer
-            local character = LocalPlayer.Character
-            local tool = character and character:FindFirstChildOfClass("Tool")
-
-            if tool and tool:FindFirstChild("Config") and tool.Config:FindFirstChild("Ammo") then
-                return tool.Config.Ammo.Value > 0 -- Only fire if ammo is greater than 0
-            end
-            return false
-        end
-    ]]
 end
 
 RunService.RenderStepped:Connect(function()
