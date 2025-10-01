@@ -4,6 +4,7 @@
 -- Libraries
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/ui-library.lua"))()
 local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/esp.lua"))()
+local Aimbot = loadstring(game:HttpGet("https://raw.githubusercontent.com/scar17off/scarhack/refs/heads/main/libraries/aimbot.lua"))()
 
 -- Initialize the UI
 local Window = UI.CreateWindow()
@@ -31,34 +32,52 @@ UserInputService.WindowFocusReleased:Connect(function()
     IsWindowFocused = false
 end)
 
--- Aimbot
-local AIMBOT_ENABLED = false
-local AUTO_FIRE_VIM = false
-local lastVimFire = 0
-local vimFireDelay = 0.05
-local FREE_FOR_ALL = false
-local AIM_METHOD = "Plain"
-local AIM_TARGET = "Head"
-local MAX_DISTANCE = 1000
-local REQUIRE_FOV = true
-local FOV_RADIUS = 360
-local SMOOTHNESS = 2
-local TEAM_CHECK = true
-local VISIBLE_CHECK = true
-local IGNORE_FRIENDS = false
+Aimbot:Setup({
+    FOV = 360,
+    Smoothness = 2,
+    TeamCheck = true,
+    VisibleCheck = true,
+    IgnoreFriends = false,
+    AutoFire = false,
+    Target = "Head",
+    PreferredHitbox = "Head",
+    AimMethod = "Plain"
+})
 
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 2
-FOVCircle.NumSides = 60
-FOVCircle.Radius = FOV_RADIUS
-FOVCircle.Filled = false
-FOVCircle.Visible = false
-FOVCircle.ZIndex = 999
-FOVCircle.Transparency = 1
-FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+AimbotTab:CreateToggle({
+    text = "Enable Aimbot",
+    default = false,
+    callback = function(Value)
+        Aimbot.Enable(Value)
+    end
+})
+
+AimbotTab:CreateToggle({
+    text = "Auto Fire",
+    default = false,
+    callback = function(Value)
+        Aimbot.config.AutoFire = Value
+    end
+})
+
+AimbotTab:CreateToggle({
+    text = "Team Check",
+    default = true,
+    callback = function(Value)
+        Aimbot.config.TeamCheck = Value
+    end
+})
+
+AimbotTab:CreateToggle({
+    text = "Visible Check",
+    default = true,
+    callback = function(Value)
+        Aimbot.config.VisibleCheck = Value
+    end
+})
 
 AimbotTab:CreateDropdown("Target Hitbox", {"Head", "HumanoidRootPart", "Torso", "Any"}, function(Option)
-    AIM_TARGET = Option
+    Aimbot.config.Target = Option
 end, "Head")
 
 AimbotTab:CreateDropdown("Preferred Hitbox", {
@@ -70,7 +89,7 @@ AimbotTab:CreateDropdown("Preferred Hitbox", {
     "Left Leg",
     "Right Leg"
 }, function(Option)
-    PREFERRED_HITBOX = Option
+    Aimbot.config.PreferredHitbox = Option
 end, "Head")
 
 AimbotTab:CreateDropdown("Aim Method", {
@@ -78,189 +97,8 @@ AimbotTab:CreateDropdown("Aim Method", {
     "Smooth",
     "Flick"
 }, function(Option)
-    AIM_METHOD = Option
+    Aimbot.config.AimMethod = Option
 end, "Plain")
-
-AimbotTab:CreateToggle({
-    text = "Random Hitbox Per Player",
-    default = false,
-    callback = function(Value)
-        RANDOM_HITBOX = Value
-    end
-})
-
-local PlayerHitboxes = {}
-
-local function IsPartVisible(part)
-    local camera = game.Workspace.CurrentCamera
-    if not camera then return false end
-
-    local origin = camera.CFrame.Position
-    local target = part.Position
-    local vector = (target - origin)
-    local ray = Ray.new(origin, vector)
-
-    local ignoreList = {LocalPlayer.Character}
-
-    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
-
-    if hit then
-        if hit == part or hit:IsDescendantOf(part.Parent) then
-            return true
-        end
-        return false
-    end
-
-    return true
-end
-
-local function GetClosestVisiblePart(character)
-    local validParts = {
-        "Head",
-        "HumanoidRootPart",
-        "Torso",
-        "Left Arm",
-        "Right Arm",
-        "Left Leg",
-        "Right Leg"
-    }
-
-    local closestPart = nil
-    local closestDistance = math.huge
-
-    for _, partName in ipairs(validParts) do
-        local part = character:FindFirstChild(partName)
-        if part then
-
-            if IsPartVisible(part) then
-                local screenPoint = Camera:WorldToScreenPoint(part.Position)
-                local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-
-                if distance < closestDistance then
-                    closestDistance = distance
-                    closestPart = part
-                end
-            end
-        end
-    end
-
-    return closestPart
-end
-
-local function GetClosestPlayerToMouse()
-    local ClosestPlayer = nil
-    local ClosestDistance = math.huge
-    local ClosestPart = nil
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            -- Ignore friends if toggle is on
-            if not IGNORE_FRIENDS or not LocalPlayer:IsFriendsWith(player.UserId) then
-                if not TEAM_CHECK or player.Team ~= LocalPlayer.Team then
-                    local character = player.Character
-                    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-                    if character and humanoid and humanoid.Health > 0 then
-                        local targetPart = nil
-
-                        if AIM_TARGET == "Any" then
-                            if RANDOM_HITBOX then
-                                -- Check if player needs a new random hitbox
-                                if not PlayerHitboxes[player] then
-                                    local validParts = {"Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
-                                    PlayerHitboxes[player] = validParts[math.random(1, #validParts)]
-                                end
-                                targetPart = character:FindFirstChild(PlayerHitboxes[player])
-                            else
-                                -- Use preferred hitbox if visible, otherwise find closest visible part
-                                local preferredPart = character:FindFirstChild(PREFERRED_HITBOX)
-                                if preferredPart and IsPartVisible(preferredPart) then
-                                    targetPart = preferredPart
-                                else
-                                    targetPart = GetClosestVisiblePart(character)
-                                end
-                            end
-                        else
-                            targetPart = character:FindFirstChild(AIM_TARGET)
-                        end
-
-                        if targetPart then
-                            if not VISIBLE_CHECK or IsPartVisible(targetPart) then
-                                local screenPoint = Camera:WorldToScreenPoint(targetPart.Position)
-                                local mouseDistance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-
-                                if (not REQUIRE_FOV or mouseDistance <= FOV_RADIUS) then
-                                    if mouseDistance < ClosestDistance then
-                                        ClosestDistance = mouseDistance
-                                        ClosestPlayer = player
-                                        ClosestPart = targetPart
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return ClosestPlayer, ClosestPart
-end
-
-AimbotTab:CreateToggle({
-    text = "Enable Aimbot",
-    default = false,
-    callback = function(Value)
-        AIMBOT_ENABLED = Value
-    end
-})
-
-AimbotTab:CreateToggle({
-    text = "Auto Fire (VIM)",
-    default = false,
-    callback = function(Value)
-        AUTO_FIRE_VIM = Value
-    end
-})
-
-AimbotTab:CreateToggle({
-    text = "Team Check",
-    default = true,
-    callback = function(Value)
-        TEAM_CHECK = Value
-    end
-})
-
-AimbotTab:CreateToggle({
-    text = "Visible Check",
-    default = true,
-    callback = function(Value)
-        VISIBLE_CHECK = Value
-    end
-})
-
-AimbotTab:CreateToggle({
-    text = "Show FOV",
-    default = false,
-    callback = function(Value)
-        FOVCircle.Visible = Value
-    end
-})
-
-AimbotTab:CreateToggle({
-    text = "Require FOV",
-    default = true,
-    callback = function(Value)
-        REQUIRE_FOV = Value
-    end
-})
-
-AimbotTab:CreateToggle({
-    text = "Ignore Friends",
-    default = false,
-    callback = function(Value)
-        IGNORE_FRIENDS = Value
-    end
-})
 
 AimbotTab:CreateSlider({
     text = "FOV Radius",
@@ -268,10 +106,7 @@ AimbotTab:CreateSlider({
     max = 800,
     default = 360,
     callback = function(Value)
-        FOV_RADIUS = Value
-        if FOVCircle then
-            FOVCircle.Radius = Value
-        end
+        Aimbot.config.FOV = Value
     end
 })
 
@@ -281,19 +116,9 @@ AimbotTab:CreateSlider({
     max = 10,
     default = 2,
     callback = function(Value)
-        SMOOTHNESS = Value
+        Aimbot.config.Smoothness = Value
     end
 })
-
--- AimbotToggle:CreateKeybind("F", function()
---     AIMBOT_ENABLED = not AIMBOT_ENABLED
---     AimbotToggle:SetState(AIMBOT_ENABLED)
---     if AIMBOT_ENABLED then
---         FOVCircle.Visible = true
---     else
---         FOVCircle.Visible = false
---     end
--- end)
 
 RunService.RenderStepped:Connect(function()
     if FOVCircle then

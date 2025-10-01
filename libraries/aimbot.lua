@@ -275,7 +275,7 @@ RunService.RenderStepped:Connect(function()
             -- Auto-fire logic
             if Aimbot.config.AutoFire and Aimbot.CanFire() then
                 VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, true, game, false)
-                task.wait()
+                task.wait(0.03)
                 VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, false, game, false)
             end
         end
