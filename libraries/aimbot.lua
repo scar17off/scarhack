@@ -37,6 +37,8 @@ Aimbot.config = {
     TargetGroups = {game.Players},
 }
 Aimbot.targets = {}
+Aimbot.Target = nil
+
 local enabled = false
 local connectionsSetup = false
 
@@ -238,6 +240,7 @@ function Aimbot.GetTarget()
         end
     end
 
+    Aimbot.Target = ClosestPlayer
     return ClosestPlayer, ClosestPart
 end
 

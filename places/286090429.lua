@@ -134,6 +134,29 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+local function UpdateESPColors()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local espBox = ESP:GetBox(player.Character)
+            if espBox then
+                if Aimbot.Target == player.Character then
+                    espBox.Color = Color3.fromRGB(255, 105, 180) -- Pink for the current target
+                else
+                    espBox.Color = ESP:GetColor(player.Character) -- Default color
+                end
+            end
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    UpdateESPColors()
+    if FOVCircle then
+        FOVCircle.Position = UserInputService:GetMouseLocation()
+        FOVCircle.Radius = Aimbot.config.FOV
+    end
+end)
+
 -- Visuals
 VisualTab:CreateToggle({
     text = "Enable ESP",
