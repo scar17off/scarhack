@@ -203,6 +203,11 @@ function Aimbot.GetTarget()
             continue
         end
 
+        -- Ignore players with ForceField
+        if character:FindFirstChildOfClass("ForceField") then
+            continue
+        end
+
         -- Team check - skip teammates if enabled
         if Aimbot.config.TeamCheck and player and Aimbot.IsTeammate(player) then
             continue
