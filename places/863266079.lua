@@ -140,6 +140,22 @@ AimbotTab:CreateToggle({
     end
 })
 
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.NumSides = 60
+FOVCircle.Radius = Aimbot.config.FOV
+FOVCircle.Filled = false
+FOVCircle.Visible = false
+FOVCircle.ZIndex = 999
+FOVCircle.Transparency = 1
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        FOVCircle.Position = UserInputService:GetMouseLocation()
+    end
+end)
+
 AimbotTab:CreateToggle({
     text = "Show FOV",
     default = false,
@@ -191,22 +207,6 @@ AimbotTab:CreateSlider({
         Aimbot.config.Smoothness = Value
     end
 })
-
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 2
-FOVCircle.NumSides = 60
-FOVCircle.Radius = Aimbot.config.FOV
-FOVCircle.Filled = false
-FOVCircle.Visible = false
-FOVCircle.ZIndex = 999
-FOVCircle.Transparency = 1
-FOVCircle.Color = Color3.fromRGB(255, 255, 255)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        FOVCircle.Position = UserInputService:GetMouseLocation()
-    end
-end)
 
 -- Visuals
 VisualTab:CreateToggle({
