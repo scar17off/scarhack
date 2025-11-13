@@ -1,6 +1,7 @@
 # ScarHack
 
-A Roblox script hub with support for multiple games.
+A Roblox script hub with support for multiple games.  
+This repository is supposed to be messy.
 
 ## Supported Games
 
@@ -17,6 +18,7 @@ A Roblox script hub with support for multiple games.
 - Zombie Tower
 - Granny
 - Build Your Factory Tycoon
+- Hide or Die
 
 ## Utils
 - [TAS](utils/tas.lua) - `Record your movements in slow motion and replay them on your character`
