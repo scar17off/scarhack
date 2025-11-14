@@ -74,7 +74,7 @@ ESP:CreateToggle({
     end
 })
 
-Player:CreateToggle({
+ESP:CreateToggle({
     text = "Players",
     default = false,
     callback = function(value)
@@ -179,9 +179,11 @@ local evidenceAbbr = {
 }
 
 -- Evidence labels
-local evidenceLabel_1 = Evidences:CreateLabel("N/A")
-local evidenceLabel_2 = Evidences:CreateLabel("N/A")
-local evidenceLabel_3 = Evidences:CreateLabel("N/A")
+local evidenceLabels = {
+    Evidences:CreateLabel("N/A"),
+    Evidences:CreateLabel("N/A"),
+    Evidences:CreateLabel("N/A")
+}
 
 -- Monitor for new evidence and update labels
 local evidenceFound = {}
@@ -190,7 +192,7 @@ local function addEvidence(evidenceName)
     if not table.find(evidenceFound, evidenceName) then
         table.insert(evidenceFound, evidenceName)
         -- Find first available N/A label and update it
-        for _, label in ipairs({evidenceLabel_1, evidenceLabel_2, evidenceLabel_3}) do
+        for _, label in ipairs(evidenceLabels) do
             if label:GetText() == "N/A" then
                 label:SetText(evidenceName)
                 -- Send chat message if chat mode is enabled

@@ -461,7 +461,7 @@ function UI.CreateWindow()
             -- Position based on number of existing elements
             local elementCount = 0
             for _, child in pairs(ModuleHolder:GetChildren()) do
-                if child:IsA("TextLabel") or child:IsA("TextButton") then
+                if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("Frame") then
                     elementCount = elementCount + 1
                 end
             end
@@ -473,6 +473,14 @@ function UI.CreateWindow()
             LabelInstance.TextSize = 14
             LabelInstance.TextXAlignment = Enum.TextXAlignment.Center
             LabelInstance.BorderSizePixel = 0
+            
+            function Label:SetText(newText)
+                LabelInstance.Text = newText
+            end
+            
+            function Label:GetText()
+                return LabelInstance.Text
+            end
             
             return Label
         end
